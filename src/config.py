@@ -83,6 +83,18 @@ ICA_RANDOM_STATE = 42
 # blink/eye components are found by correlation with the most frontal scalp
 # electrodes -- they sit right above the eyes and pick up blinks strongly.
 EOG_PROXY_CHS = ["Fp1", "Fp2"]
+# A component is "eye" only if BOTH hold (checked against the scalp maps of 6
+# recordings: every eye component had r >= 0.6 and share >= 0.54; every brain
+# component with r >= 0.45 had share <= 0.14):
+#   - |correlation| with EOG_PROXY_CHS (1-10 Hz) >= EOG_MIN_CORR
+#   - share of the component's squared map weight on the frontal-pole
+#     electrodes (EYE_MAP_CHS) >= EOG_MIN_FRONTAL_SHARE
+# MNE's default (z-score > 3 among components) missed eye components when the
+# eye signal was split across two or three of them, and removed posterior
+# ~10 Hz alpha components -- brain signal this project needs.
+EOG_MIN_CORR = 0.5
+EYE_MAP_CHS = ["Fp1", "Fpz", "Fp2", "AF7", "AF8"]
+EOG_MIN_FRONTAL_SHARE = 0.4
 
 # Epochs whose peak-to-peak amplitude on any EEG channel exceeds this (after
 # ICA) are dropped as residual artifact. 150 uV is a common post-ICA limit;
