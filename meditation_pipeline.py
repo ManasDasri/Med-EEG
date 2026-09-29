@@ -1,3 +1,6 @@
+import argparse
+from pathlib import Path
+
 import mne
 import pandas as pd
 import numpy as np
@@ -5,18 +8,21 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 
-# 1. Load EEG data (replace with your actual file path)
-raw = mne.io.read_raw_bdf(
-    r"C:\Users\rohan\OneDrive\Desktop\ML_dataset\bidsexport\sub-024\ses-01\eeg\sub-024_ses-01_task-meditation_eeg.bdf",
-    preload=True
-)
+# 1. Locate the subject's files in the BIDS dataset (works on any OS)
+parser = argparse.ArgumentParser(description="Single-subject KNN prototype.")
+parser.add_argument("--bids_root", required=True, type=Path,
+                    help="path to the ds001787 BIDS dataset")
+parser.add_argument("--subject", default="024")
+parser.add_argument("--session", default="01")
+args = parser.parse_args()
 
+stem = f"sub-{args.subject}_ses-{args.session}_task-meditation"
+eeg_dir = args.bids_root / f"sub-{args.subject}" / f"ses-{args.session}" / "eeg"
+
+raw = mne.io.read_raw_bdf(eeg_dir / f"{stem}_eeg.bdf", preload=True)
 
 # 2. Load events.tsv
-events_df = pd.read_csv(
-    r"C:\Users\rohan\OneDrive\Desktop\ML_dataset\bidsexport\sub-024\ses-01\eeg\sub-024_ses-01_task-meditation_events.tsv",
-    sep="\t"
-)
+events_df = pd.read_csv(eeg_dir / f"{stem}_events.tsv", sep="\t")
 
 
 # Map response values to labels
