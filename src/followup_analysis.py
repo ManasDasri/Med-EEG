@@ -1,9 +1,9 @@
 """Step 7 (optional, follow-up): four extensions to the core LME result,
-all using features already computed in 03_features.py -- no need to re-run
+all using features already computed in extract_features.py -- no need to re-run
 preprocessing. Each answers a distinct question that came up from the main
 findings:
 
-  A) Delta power test -- 05_ml_pipeline.py's SHAP audit found the black-box
+  A) Delta power test -- model_comparison.py's SHAP audit found the black-box
      model actually leans on scalp_delta_power, not theta/gamma. This
      formalizes that as its own hypothesis test instead of just an
      incidental finding.
@@ -18,7 +18,7 @@ findings:
      whether the ratio predicts concentration (an interaction test)?
 
 Usage:
-    python src/07_followup_analysis.py --bids_root data/ds001787
+    python src/followup_analysis.py --bids_root data/ds001787
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ import pandas as pd
 import statsmodels.formula.api as smf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from utils import Paths  # noqa: E402
+from config import Paths  # noqa: E402
 
 
 def section(title: str) -> None:
@@ -60,7 +60,7 @@ def test_tiredness_outcome(df: pd.DataFrame) -> None:
                             "scalp_delta_power"])
     if sub.empty:
         print("[skip] no non-missing tiredness_rating rows -- check "
-              "02_preprocess.py decoded it correctly.")
+              "preprocess.py decoded it correctly.")
         return
     model = smf.mixedlm(
         "tiredness_rating ~ minimal_ratio + scalp_delta_power",
@@ -69,7 +69,7 @@ def test_tiredness_outcome(df: pd.DataFrame) -> None:
     print(result.summary())
     print(f"\n[interpretation] if scalp_delta_power significantly predicts "
           f"tiredness (p<.05) but not concentration, that's a coherent "
-          f"story: the black-box model in 05_ml_pipeline.py may have been "
+          f"story: the black-box model in model_comparison.py may have been "
           f"partly tracking drowsiness rather than meditation depth.")
 
 
@@ -112,7 +112,7 @@ def test_individual_differences(df: pd.DataFrame) -> pd.DataFrame:
 def test_expertise_moderation(df: pd.DataFrame) -> None:
     section("D) Does expertise change whether the ratio predicts concentration?")
     if "group" not in df.columns:
-        print("[skip] no 'group' column -- run 03_features.py's "
+        print("[skip] no 'group' column -- run extract_features.py's "
               "participants.tsv merge first.")
         return
     sub = df.dropna(subset=["concentration_rating", "minimal_ratio", "group"])
@@ -138,7 +138,7 @@ def main() -> None:
     paths = Paths.from_root(args.bids_root)
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
-        raise SystemExit(f"{feat_path} not found -- run 03_features.py first.")
+        raise SystemExit(f"{feat_path} not found -- run extract_features.py first.")
     df = pd.read_parquet(feat_path)
 
     test_delta_power(df)

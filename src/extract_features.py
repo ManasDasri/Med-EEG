@@ -1,16 +1,16 @@
 """Step 3: turn preprocessed epochs into a feature table.
 
-For every probe-epoch (from 02_preprocess.py) and every electrode, compute:
+For every probe-epoch (from preprocess.py) and every electrode, compute:
   - band power in delta/theta/alpha/beta/gamma (Welch PSD)
   - gamma/theta power ratio
   - theta-phase to gamma-amplitude coupling (Tort Modulation Index)
 
 Then aggregate to (a) full-scalp average, (b) frontal-midline-theta /
 posterior-gamma cluster average, and (c) the single minimal 2-electrode set,
-so 05_ml_pipeline.py can run the "electrode minimalism" comparison.
+so model_comparison.py can run the "electrode minimalism" comparison.
 
 Usage:
-    python src/03_features.py --bids_root data/ds001787
+    python src/extract_features.py --bids_root data/ds001787
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ import pandas as pd
 from scipy.signal import hilbert
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from utils import (ALL_BANDS, FRONTAL_MIDLINE_THETA_CHS, GAMMA_BAND,
+from config import (ALL_BANDS, FRONTAL_MIDLINE_THETA_CHS, GAMMA_BAND,
                     MINIMAL_CH_SET, POSTERIOR_GAMMA_CHS, THETA_BAND,
                     Paths)  # noqa: E402
 
@@ -107,7 +107,7 @@ def channel_set_features(epochs: mne.Epochs, cluster_name: str,
 
 def full_scalp_band_features(epochs: mne.Epochs) -> dict:
     """All 5 canonical bands, full-scalp average -- this is the feature set
-    the 'black box' models in 05_ml_pipeline.py get to use, so they have a
+    the 'black box' models in model_comparison.py get to use, so they have a
     fair information advantage over the 2-electrode interpretable model."""
     out = {}
     for band_name, (fmin, fmax) in ALL_BANDS.items():
@@ -125,7 +125,7 @@ def main() -> None:
     manifest_path = paths.derivatives / "probe_labels.csv"
     if not manifest_path.exists():
         raise SystemExit(f"{manifest_path} not found -- run "
-                          f"02_preprocess.py first.")
+                          f"preprocess.py first.")
     manifest = pd.read_csv(manifest_path)
 
     rows = []
@@ -157,7 +157,7 @@ def main() -> None:
                 left_on="subject", right_on="participant_id", how="left")
             feat_df = feat_df.drop(columns=["participant_id"])
             # expert -> 1, novice -> 0 for the classify task in
-            # 05_ml_pipeline.py; anything else (typos, missing) -> NaN so
+            # model_comparison.py; anything else (typos, missing) -> NaN so
             # it's dropped rather than silently misclassified.
             feat_df["group_binary"] = feat_df["group"].str.lower().map(
                 {"expert": 1, "experienced": 1, "novice": 0})
