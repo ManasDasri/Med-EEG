@@ -1,0 +1,2295 @@
+{
+  "generated_at": "2026-08-25T00:00:00",
+  "n_subjects": 24,
+  "n_probes": 192,
+  "subjects": [
+    {
+      "subject": "sub-001",
+      "group": "expert",
+      "age": 52,
+      "gender": "M",
+      "mean_ratio": 1.894,
+      "mean_pac": 0.249,
+      "mean_concentration": 1.875,
+      "mean_mind_wandering": 0.875,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 73.5,
+          "minimal_ratio": 1.95,
+          "minimal_pac": 0.2423,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 244.7,
+          "minimal_ratio": 2.116,
+          "minimal_pac": 0.2478,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 424.4,
+          "minimal_ratio": 1.64,
+          "minimal_pac": 0.209,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 606.8,
+          "minimal_ratio": 1.46,
+          "minimal_pac": 0.194,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 787.2,
+          "minimal_ratio": 2.492,
+          "minimal_pac": 0.337,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 979.5,
+          "minimal_ratio": 1.847,
+          "minimal_pac": 0.2619,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1151.5,
+          "minimal_ratio": 1.679,
+          "minimal_pac": 0.2603,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1337.1,
+          "minimal_ratio": 1.97,
+          "minimal_pac": 0.2397,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        }
+      ]
+    },
+    {
+      "subject": "sub-002",
+      "group": "expert",
+      "age": 30,
+      "gender": "F",
+      "mean_ratio": 1.991,
+      "mean_pac": 0.2667,
+      "mean_concentration": 1.625,
+      "mean_mind_wandering": 1.375,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 64.2,
+          "minimal_ratio": 1.719,
+          "minimal_pac": 0.2585,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 250.7,
+          "minimal_ratio": 1.912,
+          "minimal_pac": 0.3157,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 433.7,
+          "minimal_ratio": 2.013,
+          "minimal_pac": 0.284,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 608.0,
+          "minimal_ratio": 2.334,
+          "minimal_pac": 0.2234,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 793.1,
+          "minimal_ratio": 2.708,
+          "minimal_pac": 0.3122,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 974.9,
+          "minimal_ratio": 1.385,
+          "minimal_pac": 0.2598,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1144.4,
+          "minimal_ratio": 1.437,
+          "minimal_pac": 0.2098,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1323.1,
+          "minimal_ratio": 2.418,
+          "minimal_pac": 0.2703,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        }
+      ]
+    },
+    {
+      "subject": "sub-003",
+      "group": "expert",
+      "age": 52,
+      "gender": "F",
+      "mean_ratio": 1.917,
+      "mean_pac": 0.2414,
+      "mean_concentration": 1.875,
+      "mean_mind_wandering": 0.875,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 79.4,
+          "minimal_ratio": 1.716,
+          "minimal_pac": 0.219,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 255.4,
+          "minimal_ratio": 2.034,
+          "minimal_pac": 0.2482,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 439.4,
+          "minimal_ratio": 1.843,
+          "minimal_pac": 0.2633,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 603.1,
+          "minimal_ratio": 2.031,
+          "minimal_pac": 0.216,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 792.0,
+          "minimal_ratio": 2.034,
+          "minimal_pac": 0.2145,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 964.8,
+          "minimal_ratio": 1.83,
+          "minimal_pac": 0.2425,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1159.6,
+          "minimal_ratio": 2.026,
+          "minimal_pac": 0.2901,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1325.3,
+          "minimal_ratio": 1.822,
+          "minimal_pac": 0.2379,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-004",
+      "group": "expert",
+      "age": 30,
+      "gender": "F",
+      "mean_ratio": 1.884,
+      "mean_pac": 0.2395,
+      "mean_concentration": 1.875,
+      "mean_mind_wandering": 0.875,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 68.0,
+          "minimal_ratio": 2.785,
+          "minimal_pac": 0.2739,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 244.5,
+          "minimal_ratio": 1.84,
+          "minimal_pac": 0.2164,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 434.2,
+          "minimal_ratio": 1.755,
+          "minimal_pac": 0.2717,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 605.6,
+          "minimal_ratio": 2.122,
+          "minimal_pac": 0.2601,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 784.9,
+          "minimal_ratio": 1.566,
+          "minimal_pac": 0.2317,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 968.5,
+          "minimal_ratio": 1.647,
+          "minimal_pac": 0.2375,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1141.2,
+          "minimal_ratio": 1.446,
+          "minimal_pac": 0.2323,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1322.8,
+          "minimal_ratio": 1.914,
+          "minimal_pac": 0.1923,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        }
+      ]
+    },
+    {
+      "subject": "sub-005",
+      "group": "expert",
+      "age": 31,
+      "gender": "F",
+      "mean_ratio": 1.844,
+      "mean_pac": 0.2578,
+      "mean_concentration": 1.75,
+      "mean_mind_wandering": 1.125,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 61.0,
+          "minimal_ratio": 1.307,
+          "minimal_pac": 0.2295,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 243.3,
+          "minimal_ratio": 2.666,
+          "minimal_pac": 0.283,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 420.0,
+          "minimal_ratio": 1.758,
+          "minimal_pac": 0.2398,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 603.1,
+          "minimal_ratio": 1.382,
+          "minimal_pac": 0.2627,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 781.1,
+          "minimal_ratio": 1.733,
+          "minimal_pac": 0.3123,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 977.0,
+          "minimal_ratio": 1.643,
+          "minimal_pac": 0.2142,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1151.6,
+          "minimal_ratio": 2.119,
+          "minimal_pac": 0.2607,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1338.7,
+          "minimal_ratio": 2.14,
+          "minimal_pac": 0.2601,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-006",
+      "group": "expert",
+      "age": 39,
+      "gender": "F",
+      "mean_ratio": 1.956,
+      "mean_pac": 0.2594,
+      "mean_concentration": 1.875,
+      "mean_mind_wandering": 1.25,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 78.6,
+          "minimal_ratio": 2.025,
+          "minimal_pac": 0.2813,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 241.5,
+          "minimal_ratio": 2.044,
+          "minimal_pac": 0.2506,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 427.4,
+          "minimal_ratio": 2.063,
+          "minimal_pac": 0.2761,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 613.4,
+          "minimal_ratio": 2.363,
+          "minimal_pac": 0.3157,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 782.3,
+          "minimal_ratio": 1.236,
+          "minimal_pac": 0.1884,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 964.1,
+          "minimal_ratio": 2.348,
+          "minimal_pac": 0.2911,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1141.8,
+          "minimal_ratio": 1.818,
+          "minimal_pac": 0.2233,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1323.2,
+          "minimal_ratio": 1.75,
+          "minimal_pac": 0.2487,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-007",
+      "group": "expert",
+      "age": 31,
+      "gender": "F",
+      "mean_ratio": 2.121,
+      "mean_pac": 0.2463,
+      "mean_concentration": 2.75,
+      "mean_mind_wandering": 0.25,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 70.9,
+          "minimal_ratio": 1.842,
+          "minimal_pac": 0.2366,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 247.3,
+          "minimal_ratio": 2.234,
+          "minimal_pac": 0.2275,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 433.3,
+          "minimal_ratio": 2.855,
+          "minimal_pac": 0.26,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 618.5,
+          "minimal_ratio": 1.728,
+          "minimal_pac": 0.267,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 780.5,
+          "minimal_ratio": 2.017,
+          "minimal_pac": 0.2687,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 965.3,
+          "minimal_ratio": 1.973,
+          "minimal_pac": 0.2218,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1144.0,
+          "minimal_ratio": 2.039,
+          "minimal_pac": 0.238,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1320.5,
+          "minimal_ratio": 2.283,
+          "minimal_pac": 0.2505,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-008",
+      "group": "expert",
+      "age": 34,
+      "gender": "F",
+      "mean_ratio": 2.205,
+      "mean_pac": 0.2739,
+      "mean_concentration": 2.0,
+      "mean_mind_wandering": 1.125,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 73.6,
+          "minimal_ratio": 1.67,
+          "minimal_pac": 0.2863,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 243.6,
+          "minimal_ratio": 2.174,
+          "minimal_pac": 0.2363,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 428.7,
+          "minimal_ratio": 2.267,
+          "minimal_pac": 0.2579,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 614.2,
+          "minimal_ratio": 2.173,
+          "minimal_pac": 0.2572,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 787.3,
+          "minimal_ratio": 2.798,
+          "minimal_pac": 0.2906,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 974.4,
+          "minimal_ratio": 2.468,
+          "minimal_pac": 0.2923,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1151.1,
+          "minimal_ratio": 1.906,
+          "minimal_pac": 0.2698,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1332.3,
+          "minimal_ratio": 2.185,
+          "minimal_pac": 0.3007,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-009",
+      "group": "expert",
+      "age": 53,
+      "gender": "F",
+      "mean_ratio": 2.002,
+      "mean_pac": 0.2683,
+      "mean_concentration": 1.75,
+      "mean_mind_wandering": 1.25,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 69.3,
+          "minimal_ratio": 1.99,
+          "minimal_pac": 0.2493,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 253.2,
+          "minimal_ratio": 1.773,
+          "minimal_pac": 0.2461,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 433.5,
+          "minimal_ratio": 1.891,
+          "minimal_pac": 0.2879,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 612.2,
+          "minimal_ratio": 2.037,
+          "minimal_pac": 0.2716,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 789.9,
+          "minimal_ratio": 2.045,
+          "minimal_pac": 0.2194,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 975.6,
+          "minimal_ratio": 2.019,
+          "minimal_pac": 0.2948,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1158.3,
+          "minimal_ratio": 2.123,
+          "minimal_pac": 0.3093,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1339.0,
+          "minimal_ratio": 2.135,
+          "minimal_pac": 0.2679,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-010",
+      "group": "expert",
+      "age": 33,
+      "gender": "F",
+      "mean_ratio": 1.902,
+      "mean_pac": 0.2337,
+      "mean_concentration": 1.5,
+      "mean_mind_wandering": 1.25,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 77.9,
+          "minimal_ratio": 1.576,
+          "minimal_pac": 0.1977,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 255.3,
+          "minimal_ratio": 1.984,
+          "minimal_pac": 0.2152,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 424.7,
+          "minimal_ratio": 1.513,
+          "minimal_pac": 0.22,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 613.9,
+          "minimal_ratio": 1.62,
+          "minimal_pac": 0.2854,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 781.2,
+          "minimal_ratio": 1.966,
+          "minimal_pac": 0.2378,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 977.1,
+          "minimal_ratio": 2.173,
+          "minimal_pac": 0.2328,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1157.1,
+          "minimal_ratio": 2.034,
+          "minimal_pac": 0.2225,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1329.8,
+          "minimal_ratio": 2.349,
+          "minimal_pac": 0.2584,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-011",
+      "group": "expert",
+      "age": 30,
+      "gender": "F",
+      "mean_ratio": 2.082,
+      "mean_pac": 0.2664,
+      "mean_concentration": 1.375,
+      "mean_mind_wandering": 1.5,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 76.8,
+          "minimal_ratio": 1.654,
+          "minimal_pac": 0.2354,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 241.7,
+          "minimal_ratio": 2.861,
+          "minimal_pac": 0.2522,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 424.2,
+          "minimal_ratio": 1.367,
+          "minimal_pac": 0.2445,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 605.0,
+          "minimal_ratio": 1.725,
+          "minimal_pac": 0.2812,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 784.5,
+          "minimal_ratio": 2.06,
+          "minimal_pac": 0.2559,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 964.0,
+          "minimal_ratio": 2.799,
+          "minimal_pac": 0.3214,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1149.3,
+          "minimal_ratio": 2.2,
+          "minimal_pac": 0.2622,
+          "concentration_rating": 3,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1335.6,
+          "minimal_ratio": 1.987,
+          "minimal_pac": 0.2781,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        }
+      ]
+    },
+    {
+      "subject": "sub-012",
+      "group": "expert",
+      "age": 52,
+      "gender": "F",
+      "mean_ratio": 1.979,
+      "mean_pac": 0.2486,
+      "mean_concentration": 1.625,
+      "mean_mind_wandering": 1.25,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 67.9,
+          "minimal_ratio": 2.062,
+          "minimal_pac": 0.2574,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 253.9,
+          "minimal_ratio": 1.97,
+          "minimal_pac": 0.2368,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 426.9,
+          "minimal_ratio": 1.831,
+          "minimal_pac": 0.2847,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 616.4,
+          "minimal_ratio": 1.697,
+          "minimal_pac": 0.2474,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 788.7,
+          "minimal_ratio": 2.702,
+          "minimal_pac": 0.3321,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 969.3,
+          "minimal_ratio": 1.908,
+          "minimal_pac": 0.1679,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1145.6,
+          "minimal_ratio": 2.215,
+          "minimal_pac": 0.225,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1320.6,
+          "minimal_ratio": 1.444,
+          "minimal_pac": 0.2374,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-013",
+      "group": "novice",
+      "age": 26,
+      "gender": "F",
+      "mean_ratio": 1.264,
+      "mean_pac": 0.2051,
+      "mean_concentration": 0.875,
+      "mean_mind_wandering": 2.125,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 71.1,
+          "minimal_ratio": 1.4,
+          "minimal_pac": 0.2389,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 253.8,
+          "minimal_ratio": 1.073,
+          "minimal_pac": 0.2016,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 428.1,
+          "minimal_ratio": 1.053,
+          "minimal_pac": 0.175,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 608.5,
+          "minimal_ratio": 1.322,
+          "minimal_pac": 0.2604,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 784.6,
+          "minimal_ratio": 1.292,
+          "minimal_pac": 0.1877,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 963.8,
+          "minimal_ratio": 1.245,
+          "minimal_pac": 0.1866,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1159.6,
+          "minimal_ratio": 1.28,
+          "minimal_pac": 0.1899,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1325.5,
+          "minimal_ratio": 1.446,
+          "minimal_pac": 0.2004,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-014",
+      "group": "novice",
+      "age": 47,
+      "gender": "F",
+      "mean_ratio": 1.26,
+      "mean_pac": 0.2134,
+      "mean_concentration": 1.125,
+      "mean_mind_wandering": 1.75,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 71.5,
+          "minimal_ratio": 1.241,
+          "minimal_pac": 0.1973,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 242.3,
+          "minimal_ratio": 0.93,
+          "minimal_pac": 0.2027,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 423.0,
+          "minimal_ratio": 1.673,
+          "minimal_pac": 0.2476,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 612.1,
+          "minimal_ratio": 1.025,
+          "minimal_pac": 0.1914,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 785.9,
+          "minimal_ratio": 1.363,
+          "minimal_pac": 0.1974,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 979.0,
+          "minimal_ratio": 0.985,
+          "minimal_pac": 0.1825,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1151.0,
+          "minimal_ratio": 1.363,
+          "minimal_pac": 0.2381,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1324.6,
+          "minimal_ratio": 1.499,
+          "minimal_pac": 0.2505,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        }
+      ]
+    },
+    {
+      "subject": "sub-015",
+      "group": "novice",
+      "age": 35,
+      "gender": "M",
+      "mean_ratio": 1.17,
+      "mean_pac": 0.1815,
+      "mean_concentration": 1.25,
+      "mean_mind_wandering": 1.125,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 68.5,
+          "minimal_ratio": 1.188,
+          "minimal_pac": 0.1778,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 241.2,
+          "minimal_ratio": 0.814,
+          "minimal_pac": 0.1787,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 422.5,
+          "minimal_ratio": 1.425,
+          "minimal_pac": 0.1823,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 608.8,
+          "minimal_ratio": 1.096,
+          "minimal_pac": 0.1617,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 781.8,
+          "minimal_ratio": 0.7,
+          "minimal_pac": 0.1487,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 971.5,
+          "minimal_ratio": 1.947,
+          "minimal_pac": 0.2338,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1143.6,
+          "minimal_ratio": 1.318,
+          "minimal_pac": 0.1973,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1328.2,
+          "minimal_ratio": 0.873,
+          "minimal_pac": 0.1719,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-016",
+      "group": "novice",
+      "age": 42,
+      "gender": "M",
+      "mean_ratio": 1.317,
+      "mean_pac": 0.2124,
+      "mean_concentration": 1.25,
+      "mean_mind_wandering": 1.875,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 76.3,
+          "minimal_ratio": 1.496,
+          "minimal_pac": 0.2039,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 257.3,
+          "minimal_ratio": 0.933,
+          "minimal_pac": 0.1864,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 423.8,
+          "minimal_ratio": 1.308,
+          "minimal_pac": 0.2141,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 605.3,
+          "minimal_ratio": 0.92,
+          "minimal_pac": 0.2345,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 799.5,
+          "minimal_ratio": 1.496,
+          "minimal_pac": 0.2429,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 961.9,
+          "minimal_ratio": 1.099,
+          "minimal_pac": 0.1909,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1150.0,
+          "minimal_ratio": 2.072,
+          "minimal_pac": 0.2504,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1324.9,
+          "minimal_ratio": 1.213,
+          "minimal_pac": 0.1757,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 3
+        }
+      ]
+    },
+    {
+      "subject": "sub-017",
+      "group": "novice",
+      "age": 50,
+      "gender": "F",
+      "mean_ratio": 1.268,
+      "mean_pac": 0.2149,
+      "mean_concentration": 1.25,
+      "mean_mind_wandering": 1.875,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 65.5,
+          "minimal_ratio": 0.712,
+          "minimal_pac": 0.2308,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 245.7,
+          "minimal_ratio": 1.39,
+          "minimal_pac": 0.1894,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 428.9,
+          "minimal_ratio": 1.16,
+          "minimal_pac": 0.2461,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 617.4,
+          "minimal_ratio": 0.987,
+          "minimal_pac": 0.202,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 780.9,
+          "minimal_ratio": 1.557,
+          "minimal_pac": 0.2252,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 969.9,
+          "minimal_ratio": 1.282,
+          "minimal_pac": 0.1672,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1142.0,
+          "minimal_ratio": 1.702,
+          "minimal_pac": 0.2433,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1321.5,
+          "minimal_ratio": 1.352,
+          "minimal_pac": 0.2148,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-018",
+      "group": "novice",
+      "age": 34,
+      "gender": "F",
+      "mean_ratio": 1.135,
+      "mean_pac": 0.1957,
+      "mean_concentration": 0.875,
+      "mean_mind_wandering": 2.0,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 79.1,
+          "minimal_ratio": 1.016,
+          "minimal_pac": 0.2399,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 244.7,
+          "minimal_ratio": 0.789,
+          "minimal_pac": 0.1446,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 435.2,
+          "minimal_ratio": 1.185,
+          "minimal_pac": 0.1866,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 600.9,
+          "minimal_ratio": 1.254,
+          "minimal_pac": 0.1995,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 791.3,
+          "minimal_ratio": 1.383,
+          "minimal_pac": 0.1952,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 970.0,
+          "minimal_ratio": 1.356,
+          "minimal_pac": 0.2002,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1158.0,
+          "minimal_ratio": 1.08,
+          "minimal_pac": 0.1931,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1339.8,
+          "minimal_ratio": 1.019,
+          "minimal_pac": 0.2063,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-019",
+      "group": "novice",
+      "age": 51,
+      "gender": "F",
+      "mean_ratio": 1.305,
+      "mean_pac": 0.2046,
+      "mean_concentration": 0.75,
+      "mean_mind_wandering": 2.375,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 62.1,
+          "minimal_ratio": 1.158,
+          "minimal_pac": 0.1771,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 259.6,
+          "minimal_ratio": 1.057,
+          "minimal_pac": 0.2221,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 438.2,
+          "minimal_ratio": 1.147,
+          "minimal_pac": 0.1872,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 612.1,
+          "minimal_ratio": 1.28,
+          "minimal_pac": 0.1573,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 792.6,
+          "minimal_ratio": 1.001,
+          "minimal_pac": 0.2342,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 974.6,
+          "minimal_ratio": 1.715,
+          "minimal_pac": 0.2111,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1155.7,
+          "minimal_ratio": 1.547,
+          "minimal_pac": 0.2408,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1325.1,
+          "minimal_ratio": 1.538,
+          "minimal_pac": 0.2069,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-020",
+      "group": "novice",
+      "age": 45,
+      "gender": "M",
+      "mean_ratio": 1.322,
+      "mean_pac": 0.218,
+      "mean_concentration": 1.125,
+      "mean_mind_wandering": 1.375,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 79.3,
+          "minimal_ratio": 1.587,
+          "minimal_pac": 0.2242,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 259.3,
+          "minimal_ratio": 1.878,
+          "minimal_pac": 0.3044,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 429.1,
+          "minimal_ratio": 1.412,
+          "minimal_pac": 0.1937,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 602.2,
+          "minimal_ratio": 1.056,
+          "minimal_pac": 0.1632,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 793.0,
+          "minimal_ratio": 1.308,
+          "minimal_pac": 0.2221,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 962.8,
+          "minimal_ratio": 1.042,
+          "minimal_pac": 0.1769,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1147.8,
+          "minimal_ratio": 1.581,
+          "minimal_pac": 0.2206,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1337.7,
+          "minimal_ratio": 0.711,
+          "minimal_pac": 0.2386,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        }
+      ]
+    },
+    {
+      "subject": "sub-021",
+      "group": "novice",
+      "age": 33,
+      "gender": "M",
+      "mean_ratio": 1.433,
+      "mean_pac": 0.2223,
+      "mean_concentration": 1.0,
+      "mean_mind_wandering": 2.0,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 64.3,
+          "minimal_ratio": 1.543,
+          "minimal_pac": 0.1913,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 250.9,
+          "minimal_ratio": 1.058,
+          "minimal_pac": 0.2104,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 439.0,
+          "minimal_ratio": 1.627,
+          "minimal_pac": 0.2274,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 601.0,
+          "minimal_ratio": 1.369,
+          "minimal_pac": 0.2067,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 791.7,
+          "minimal_ratio": 0.774,
+          "minimal_pac": 0.2666,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 965.5,
+          "minimal_ratio": 1.398,
+          "minimal_pac": 0.1998,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1153.2,
+          "minimal_ratio": 2.331,
+          "minimal_pac": 0.2577,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1320.3,
+          "minimal_ratio": 1.36,
+          "minimal_pac": 0.2188,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-022",
+      "group": "novice",
+      "age": 46,
+      "gender": "F",
+      "mean_ratio": 1.23,
+      "mean_pac": 0.2107,
+      "mean_concentration": 0.875,
+      "mean_mind_wandering": 2.125,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 75.6,
+          "minimal_ratio": 1.556,
+          "minimal_pac": 0.2502,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 254.5,
+          "minimal_ratio": 1.132,
+          "minimal_pac": 0.2054,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 421.2,
+          "minimal_ratio": 1.731,
+          "minimal_pac": 0.2127,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 601.5,
+          "minimal_ratio": 0.948,
+          "minimal_pac": 0.2014,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 787.6,
+          "minimal_ratio": 1.719,
+          "minimal_pac": 0.2559,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 977.1,
+          "minimal_ratio": 1.061,
+          "minimal_pac": 0.1886,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1157.8,
+          "minimal_ratio": 0.951,
+          "minimal_pac": 0.1558,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1328.5,
+          "minimal_ratio": 0.738,
+          "minimal_pac": 0.2159,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 2
+        }
+      ]
+    },
+    {
+      "subject": "sub-023",
+      "group": "novice",
+      "age": 45,
+      "gender": "M",
+      "mean_ratio": 1.312,
+      "mean_pac": 0.2159,
+      "mean_concentration": 1.375,
+      "mean_mind_wandering": 1.625,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 61.9,
+          "minimal_ratio": 1.158,
+          "minimal_pac": 0.2202,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 253.4,
+          "minimal_ratio": 1.771,
+          "minimal_pac": 0.2666,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 439.4,
+          "minimal_ratio": 0.697,
+          "minimal_pac": 0.2173,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 604.5,
+          "minimal_ratio": 1.037,
+          "minimal_pac": 0.1854,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 796.1,
+          "minimal_ratio": 1.826,
+          "minimal_pac": 0.2777,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 972.2,
+          "minimal_ratio": 1.834,
+          "minimal_pac": 0.1745,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1158.4,
+          "minimal_ratio": 1.005,
+          "minimal_pac": 0.1617,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 2
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1322.8,
+          "minimal_ratio": 1.169,
+          "minimal_pac": 0.2237,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        }
+      ]
+    },
+    {
+      "subject": "sub-024",
+      "group": "novice",
+      "age": 48,
+      "gender": "M",
+      "mean_ratio": 1.249,
+      "mean_pac": 0.2013,
+      "mean_concentration": 1.125,
+      "mean_mind_wandering": 1.75,
+      "probes": [
+        {
+          "probe_index": 0,
+          "session": "ses-01",
+          "probe_onset_s": 67.4,
+          "minimal_ratio": 1.661,
+          "minimal_pac": 0.2532,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 1,
+          "session": "ses-01",
+          "probe_onset_s": 243.1,
+          "minimal_ratio": 1.192,
+          "minimal_pac": 0.1585,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 0
+        },
+        {
+          "probe_index": 2,
+          "session": "ses-01",
+          "probe_onset_s": 429.7,
+          "minimal_ratio": 1.303,
+          "minimal_pac": 0.2056,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 1,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 3,
+          "session": "ses-01",
+          "probe_onset_s": 602.2,
+          "minimal_ratio": 1.039,
+          "minimal_pac": 0.2105,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 3
+        },
+        {
+          "probe_index": 4,
+          "session": "ses-02",
+          "probe_onset_s": 787.9,
+          "minimal_ratio": 1.095,
+          "minimal_pac": 0.1686,
+          "concentration_rating": 0,
+          "mind_wandering_rating": 3,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 5,
+          "session": "ses-02",
+          "probe_onset_s": 975.3,
+          "minimal_ratio": 1.265,
+          "minimal_pac": 0.2111,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 6,
+          "session": "ses-02",
+          "probe_onset_s": 1147.6,
+          "minimal_ratio": 1.257,
+          "minimal_pac": 0.2275,
+          "concentration_rating": 1,
+          "mind_wandering_rating": 2,
+          "tiredness_rating": 1
+        },
+        {
+          "probe_index": 7,
+          "session": "ses-02",
+          "probe_onset_s": 1327.9,
+          "minimal_ratio": 1.182,
+          "minimal_pac": 0.1752,
+          "concentration_rating": 2,
+          "mind_wandering_rating": 0,
+          "tiredness_rating": 0
+        }
+      ]
+    }
+  ],
+  "group_summary": {
+    "expert": {
+      "n_subjects": 12,
+      "n_probes": 96,
+      "mean_ratio": 1.981,
+      "mean_pac": 0.2542,
+      "mean_concentration": 1.823
+    },
+    "novice": {
+      "n_subjects": 12,
+      "n_probes": 96,
+      "mean_ratio": 1.272,
+      "mean_pac": 0.208,
+      "mean_concentration": 1.073
+    }
+  },
+  "model_comparison": [
+    {
+      "model": "interpretable_ratio_pac",
+      "metric": "r2",
+      "score": 0.412,
+      "n": 192
+    },
+    {
+      "model": "random_forest_5band",
+      "metric": "r2",
+      "score": 0.461,
+      "n": 192
+    },
+    {
+      "model": "mlp_5band",
+      "metric": "r2",
+      "score": 0.397
+    }
+  ],
+  "electrode_minimalism": [
+    {
+      "electrode_set": "minimal",
+      "n_electrodes": 2,
+      "coef": 0.38,
+      "pvalue": 0.002,
+      "n_obs": 192
+    },
+    {
+      "electrode_set": "frontal_theta",
+      "n_electrodes": 3,
+      "coef": 0.41,
+      "pvalue": 0.001,
+      "n_obs": 192
+    },
+    {
+      "electrode_set": "posterior_gamma",
+      "n_electrodes": 3,
+      "coef": 0.29,
+      "pvalue": 0.01,
+      "n_obs": 192
+    }
+  ],
+  "shap_importance": [
+    {
+      "feature": "scalp_theta_power",
+      "importance": 0.31
+    },
+    {
+      "feature": "scalp_gamma_power",
+      "importance": 0.27
+    },
+    {
+      "feature": "scalp_alpha_power",
+      "importance": 0.18
+    },
+    {
+      "feature": "scalp_beta_power",
+      "importance": 0.14
+    },
+    {
+      "feature": "scalp_delta_power",
+      "importance": 0.1
+    }
+  ]
+}

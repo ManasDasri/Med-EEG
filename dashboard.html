@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroDial — meditation EEG biomarker dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Archivo:wght@400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#0B0D10;
+    --panel:#15181D;
+    --panel-hi:#1B1F25;
+    --paper:#ECE7DA;
+    --dim:#8A9098;
+    --faint:#565B62;
+    --theta:#C98A46;
+    --gamma:#5B92AA;
+    --line: rgba(236,231,218,0.09);
+    --line-strong: rgba(236,231,218,0.17);
+    --font-display:'Fraunces', 'Iowan Old Style', serif;
+    --font-body:'Archivo', 'Helvetica Neue', sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--ink); color:var(--paper);}
+  body{
+    font-family:var(--font-body);
+    font-size:17.5px;
+    min-height:100vh;
+    overflow-x:hidden;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(236,231,218,0.035) 0px, rgba(236,231,218,0.035) 1px, transparent 1px, transparent 27px),
+      repeating-linear-gradient(90deg, rgba(236,231,218,0.035) 0px, rgba(236,231,218,0.035) 1px, transparent 1px, transparent 27px);
+  }
+  #root{min-height:100vh; position:relative; z-index:1;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+  :focus-visible{ outline:2px solid var(--theta); outline-offset:2px; border-radius:2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useMemo, useLayoutEffect } = React;
+
+/* ============================= helpers ============================= */
+function fmt(v, d=2){ return (v===null||v===undefined||Number.isNaN(v)) ? '—' : Number(v).toFixed(d); }
+function scale(v, inMin, inMax, outMin, outMax){
+  if(inMax===inMin) return (outMin+outMax)/2;
+  const t = (v - inMin)/(inMax - inMin);
+  return outMin + t*(outMax-outMin);
+}
+function clamp01(t){ return Math.max(0, Math.min(1, t)); }
+function mixHex(hexA, hexB, t){
+  const a = [1,3,5].map(i=>parseInt(hexA.slice(i,i+2),16));
+  const b = [1,3,5].map(i=>parseInt(hexB.slice(i,i+2),16));
+  const m = a.map((v,i)=> Math.round(v + (b[i]-v)*clamp01(t)));
+  return `rgb(${m.join(',')})`;
+}
+const RATIO_MIN = 0.5, RATIO_MAX = 2.5;
+function ratioToColor(r){
+  const t = clamp01(scale(r ?? (RATIO_MIN+RATIO_MAX)/2, RATIO_MIN, RATIO_MAX, 0, 1));
+  return mixHex('#C98A46', '#5B92AA', t); // theta -> gamma
+}
+const NICE_MODEL_NAMES = {
+  interpretable_ratio_pac: 'Interpretable (ratio + PAC)',
+  random_forest_5band: 'Random forest (5-band scalp)',
+  mlp_5band: 'MLP (5-band scalp)',
+};
+
+/* ============================= count-up hook ============================= */
+function useCountUp(target, duration=850){
+  const [val, setVal] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    if(target===null || target===undefined || Number.isNaN(target)){ setVal(0); prev.current=0; return; }
+    const from = prev.current;
+    let raf, start=null;
+    function step(ts){
+      if(!start) start = ts;
+      const p = Math.min(1, (ts-start)/duration);
+      const eased = 1-Math.pow(1-p,3);
+      setVal(from + (target-from)*eased);
+      if(p<1) raf = requestAnimationFrame(step);
+      else prev.current = target;
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return val;
+}
+
+/* ============================= responsive width hook ============================= */
+function useMeasuredWidth(){
+  const ref = useRef(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    if(!ref.current) return;
+    const ro = new ResizeObserver(entries => { for(const e of entries) setWidth(e.contentRect.width); });
+    ro.observe(ref.current);
+    setWidth(ref.current.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, width];
+}
+
+/* ============================= ratio dial (analog gauge) ============================= */
+function dialPoint(angleDeg, r, cx, cy){
+  const rad = angleDeg*Math.PI/180;
+  return [cx + r*Math.cos(rad), cy - r*Math.sin(rad)];
+}
+
+function Dial({ meanRatio }){
+  const CX=120, CY=126, R_RIM=100, R_MAJOR_IN=83, R_MINOR_IN=90, R_LABEL=66;
+  const hasValue = meanRatio!=null && !Number.isNaN(meanRatio);
+  const animated = useCountUp(hasValue ? meanRatio : RATIO_MIN, 1000);
+  const clamped = Math.max(RATIO_MIN, Math.min(RATIO_MAX, hasValue ? meanRatio : RATIO_MIN));
+  const t = clamp01((clamped-RATIO_MIN)/(RATIO_MAX-RATIO_MIN));
+  const needleRot = hasValue ? (t*180-180) : -180;
+  const color = ratioToColor(hasValue ? meanRatio : null);
+
+  const ticks = [];
+  for(let v=RATIO_MIN; v<=RATIO_MAX+1e-6; v+=0.25){
+    const rv = Math.round(v*100);
+    const isMajor = rv % 50 === 0;
+    const tt = (v-RATIO_MIN)/(RATIO_MAX-RATIO_MIN);
+    const a = 180 - tt*180;
+    const [x1,y1] = dialPoint(a, R_RIM, CX, CY);
+    const [x2,y2] = dialPoint(a, isMajor?R_MAJOR_IN:R_MINOR_IN, CX, CY);
+    const [lx,ly] = dialPoint(a, R_LABEL, CX, CY);
+    ticks.push({ v, x1, y1, x2, y2, lx, ly, isMajor });
+  }
+
+  const rimPts = [];
+  for(let i=0;i<=48;i++){
+    const a = 180 - (i/48)*180;
+    rimPts.push(dialPoint(a, R_RIM, CX, CY));
+  }
+  const rimPath = rimPts.map(([x,y],i)=> (i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)).join(' ');
+
+  return (
+    <div className="dial-wrap">
+      <svg viewBox="0 0 240 148" className="dial-svg" role="img" aria-label={hasValue ? `Mean gamma to theta ratio ${animated.toFixed(2)}` : 'No session loaded'}>
+        <path d={rimPath} className="dial-rim" />
+        {ticks.map((tk,i) => (
+          <line key={i} x1={tk.x1} y1={tk.y1} x2={tk.x2} y2={tk.y2}
+                className={tk.isMajor ? "dial-tick dial-tick-major" : "dial-tick"} />
+        ))}
+        {ticks.filter(tk=>tk.isMajor).map((tk,i) => (
+          <text key={i} x={tk.lx} y={tk.ly+3.5} textAnchor="middle" className="dial-tick-label">{tk.v.toFixed(1)}</text>
+        ))}
+        <text x={24} y={144} className="dial-end-label" style={{fill:'var(--theta)'}}>θ slower</text>
+        <text x={216} y={144} textAnchor="end" className="dial-end-label" style={{fill:'var(--gamma)'}}>γ faster</text>
+        <g transform={`rotate(${needleRot} ${CX} ${CY})`} className="dial-needle-g">
+          <line x1={CX-14} y1={CY} x2={CX+80} y2={CY} className="dial-needle" style={{stroke:color}} />
+        </g>
+        <circle cx={CX} cy={CY} r="6" className="dial-hub" />
+      </svg>
+      <div className="dial-readout">
+        <div className="dial-readout-val">{hasValue ? animated.toFixed(2) : '—'}</div>
+        <div className="dial-readout-lbl">mean γ:θ ratio, this session</div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================= sliding tab bar ============================= */
+function TabBar({ tabs, active, onChange }){
+  const containerRef = useRef(null);
+  const btnRefs = useRef({});
+  const [ind, setInd] = useState({left:0, width:0});
+
+  const recompute = () => {
+    const el = btnRefs.current[active];
+    const cont = containerRef.current;
+    if(el && cont){
+      const er = el.getBoundingClientRect(), cr = cont.getBoundingClientRect();
+      setInd({ left: er.left - cr.left, width: er.width });
+    }
+  };
+  useLayoutEffect(recompute, [active]);
+  useEffect(() => {
+    window.addEventListener('resize', recompute);
+    return () => window.removeEventListener('resize', recompute);
+  }, [active]);
+
+  return (
+    <div className="tabbar" ref={containerRef}>
+      <div className="tab-indicator" style={{ transform:`translateX(${ind.left}px)`, width: ind.width }} />
+      {tabs.map(([id,label]) => (
+        <button key={id} ref={el => btnRefs.current[id]=el}
+                className={"tab" + (active===id ? " active" : "")}
+                onClick={()=>onChange(id)}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
+/* ============================= animated SVG line chart ============================= */
+function LineChart({ points, points2, height=240, subjectKey }){
+  const [wrapRef, width] = useMeasuredWidth();
+  if(!points || !points.length) return <div className="empty">No probe data for this subject.</div>;
+
+  const padL = 44, padR = 48, padT = 18, padB = 30;
+  const vals = points.map(p=>p.y).filter(v=>v!=null);
+  let yMin = Math.min(...vals), yMax = Math.max(...vals);
+  if(yMin===yMax){ yMin-=1; yMax+=1; }
+  const yPad = (yMax-yMin)*0.12; yMin -= yPad; yMax += yPad;
+
+  const toXY = (i,y,min,max,w) => {
+    const x = points.length>1 ? scale(i,0,points.length-1,padL,w-padR) : w/2;
+    return [x, scale(y,min,max,height-padB,padT)];
+  };
+
+  const body = width>0 ? (() => {
+    const path1 = points.map((p,i)=>toXY(i,p.y,yMin,yMax,width)).map(([x,y],i)=>(i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)).join(' ');
+    let path2pts = null;
+    if(points2 && points2.length){
+      path2pts = points2.map((p,i) => { if(p.y==null) return null; const [x,y]=toXY(i,p.y,0,3,width); return {x,y,i}; }).filter(Boolean);
+    }
+    const yTicks = [yMin,(yMin+yMax)/2,yMax];
+    return (
+      <svg width={width} height={height} className="linechart">
+        {yTicks.map((tval,idx) => { const y = scale(tval,yMin,yMax,height-padB,padT);
+          return <g key={idx}><line x1={padL} x2={width-padR} y1={y} y2={y} className="gridline"/><text x={padL-8} y={y+3} textAnchor="end" className="axis-label">{tval.toFixed(1)}</text></g>; })}
+        {[0,1,2,3].map(tv => { const y = scale(tv,0,3,height-padB,padT);
+          return <text key={tv} x={width-padR+8} y={y+3} className="axis-label axis-label-r">{tv}</text>; })}
+        <text x={padL} y={padT-5} className="axis-caption axis-caption-theta">γ/θ ratio</text>
+        <text x={width-padR} y={padT-5} textAnchor="end" className="axis-caption axis-caption-gamma">concentration</text>
+        <path key={subjectKey+'-t'} d={path1} className="trace-ratio" />
+        {points.map((p,i) => { const [x,y]=toXY(i,p.y,yMin,yMax,width); return <circle key={i} cx={x} cy={y} r="2.6" className="trace-ratio-dot" style={{animationDelay:(i*30)+'ms'}}/>; })}
+        {path2pts && <polyline key={subjectKey+'-g'} points={path2pts.map(p=>`${p.x},${p.y}`).join(' ')} className="trace-rating" />}
+        {path2pts && path2pts.map(p => <circle key={p.i} cx={p.x} cy={p.y} r="2.6" className="trace-rating-dot" style={{animationDelay:(p.i*30+100)+'ms'}}/>)}
+        {points.map((p,i) => { const [x] = toXY(i,p.y,yMin,yMax,width); return <text key={i} x={x} y={height-8} textAnchor="middle" className="axis-label">{p.x}</text>; })}
+      </svg>
+    );
+  })() : null;
+
+  return <div ref={wrapRef} className="chart-measure" style={{height}}>{body}</div>;
+}
+
+/* ============================= animated SVG bar chart ============================= */
+function BarChart({ items, height=220, horizontal=false }){
+  const [wrapRef, width] = useMeasuredWidth();
+  const [grown, setGrown] = useState(false);
+  const itemsKey = JSON.stringify((items||[]).map(i=>i.label+':'+i.value));
+  useEffect(() => {
+    setGrown(false);
+    const t = setTimeout(() => setGrown(true), 40);
+    return () => clearTimeout(t);
+  }, [itemsKey]);
+
+  if(!items || !items.length) return <div className="empty">No data.</div>;
+  const max = Math.max(...items.map(i=>Math.abs(i.value||0)), 0.001);
+
+  const body = width>0 ? (() => {
+    if(horizontal){
+      const padL=150, padR=56, padT=10, padB=10;
+      const rowH = (height-padT-padB)/items.length;
+      const barH = Math.min(26, rowH*0.5);
+      return (
+        <svg width={width} height={height} className="barchart-h">
+          {items.map((it,i) => {
+            const cy = padT + rowH*i + rowH/2;
+            const fullW = scale(Math.abs(it.value), 0, max, 0, width-padL-padR);
+            const w = grown ? fullW : 0;
+            return (
+              <g key={it.label}>
+                <text x={padL-10} y={cy+3.5} textAnchor="end" className="bar-label-h">{it.label}</text>
+                <rect x={padL} y={cy-barH/2} width={w} height={barH} rx="2" className={it.cls||'bar-neutral'} style={{transition:`width 0.6s cubic-bezier(.2,.7,.2,1) ${i*50}ms`}} />
+                <text x={padL+fullW+8} y={cy+3.5} className="bar-value">{fmt(it.value,3)}</text>
+              </g>
+            );
+          })}
+        </svg>
+      );
+    }
+    const padL=40, padR=20, padT=16, padB=34;
+    const plotW = width-padL-padR;
+    const barW = Math.min(44, plotW/items.length*0.5);
+    return (
+      <svg width={width} height={height} className="barchart-v">
+        <line x1={padL} x2={width-padR} y1={height-padB} y2={height-padB} className="baseline"/>
+        {items.map((it,i) => {
+          const slot = plotW/items.length;
+          const x = padL + slot*i + slot/2 - barW/2;
+          const fullH = scale(Math.abs(it.value), 0, max, 0, height-padT-padB);
+          const h = grown ? fullH : 0;
+          return (
+            <g key={it.label}>
+              <rect x={x} y={height-padB-h} width={barW} height={h} rx="2" className={it.cls||'bar-neutral'} style={{transition:`height 0.6s cubic-bezier(.2,.7,.2,1) ${i*50}ms, y 0.6s cubic-bezier(.2,.7,.2,1) ${i*50}ms`}} />
+              <text x={x+barW/2} y={height-padB+14} textAnchor="middle" className="bar-label-v">{it.label}</text>
+              <text x={x+barW/2} y={height-padB-fullH-6} textAnchor="middle" className="bar-value">{fmt(it.value,2)}</text>
+            </g>
+          );
+        })}
+      </svg>
+    );
+  })() : null;
+
+  return <div ref={wrapRef} className="chart-measure" style={{height}}>{body}</div>;
+}
+
+/* ============================= file loader ============================= */
+function FileLoader({ onLoad, status }){
+  const [drag, setDrag] = useState(false);
+  function readFile(file){
+    const reader = new FileReader();
+    reader.onload = ev => { try{ onLoad(JSON.parse(ev.target.result), file.name); } catch(err){ onLoad(null,null,err.message); } };
+    reader.readAsText(file);
+  }
+  return (
+    <div>
+      <label className={"loadzone" + (drag?" drag":"")} htmlFor="fileInput"
+        onDragOver={e=>{e.preventDefault(); setDrag(true);}}
+        onDragLeave={()=>setDrag(false)}
+        onDrop={e=>{ e.preventDefault(); setDrag(false); if(e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]); }}>
+        <svg className="loadzone-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 1.5V10M8 10L4.8 6.8M8 10l3.2-3.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 11.5v1.8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <div className="loadzone-text">Load session data<br/><span>Click, or drop a dashboard_data.json file</span></div>
+      </label>
+      <input id="fileInput" type="file" accept=".json" style={{display:'none'}}
+             onChange={e=> e.target.files.length && readFile(e.target.files[0])} />
+      <div className="status">{status}</div>
+    </div>
+  );
+}
+
+/* ============================= app ============================= */
+function App(){
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState('No session loaded yet.');
+  const [subject, setSubject] = useState(null);
+  const [tab, setTab] = useState('explorer');
+
+  function handleLoad(json, name, err){
+    if(err){ setStatus("Couldn't parse that file — " + err); return; }
+    setData(json);
+    setStatus('Loaded ' + name + ' — ' + (json.n_subjects ?? '?') + ' subjects.');
+    if(json.subjects && json.subjects.length) setSubject(json.subjects[0].subject);
+  }
+
+  const meanRatio = useMemo(() => {
+    if(!data) return null;
+    const rs = (data.subjects||[]).map(s=>s.mean_ratio).filter(v=>v!=null);
+    return rs.length ? rs.reduce((a,b)=>a+b,0)/rs.length : null;
+  }, [data]);
+
+  const modelGap = useMemo(() => {
+    if(!data) return null;
+    const mc = data.model_comparison || [];
+    const interp = mc.find(m=>m.model==='interpretable_ratio_pac');
+    const rf = mc.find(m=>m.model==='random_forest_5band');
+    return (interp && rf) ? rf.score - interp.score : null;
+  }, [data]);
+
+  const currentSubject = useMemo(() => (data?.subjects||[]).find(s=>s.subject===subject), [data, subject]);
+
+  const kpiSubjects = useCountUp(data ? data.n_subjects : null, 700);
+  const kpiProbes = useCountUp(data ? data.n_probes : null, 900);
+  const kpiGap = useCountUp(modelGap, 900);
+
+  const TABS = [
+    ['explorer','Subject explorer'],
+    ['group','Group comparison'],
+    ['models','Model shootout'],
+    ['electrodes','Electrode minimalism'],
+    ['shap','SHAP audit'],
+  ];
+
+  return (
+    <div className="app">
+      <aside className="rail">
+        <div className="rail-head">
+          <div className="wordmark">
+            <svg className="wordmark-mark" width="17" height="17" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="7.4" stroke="currentColor" strokeWidth="1.2"/>
+              <line x1="9" y1="9" x2="13.1" y2="6.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              <circle cx="9" cy="9" r="1.2" fill="currentColor"/>
+            </svg>
+            <span>NeuroDial</span>
+          </div>
+          <div className="wordmark-sub">γ / θ biomarker dashboard</div>
+        </div>
+        <div className="rail-block">
+          <FileLoader onLoad={handleLoad} status={status} />
+        </div>
+        <div className="rail-block rail-subjects">
+          <div className="rail-label">{data ? `${data.subjects?.length||0} subject${(data.subjects?.length===1)?'':'s'} loaded` : 'Subjects'}</div>
+          <div className="subject-list">
+            {!data && <div className="empty">Load a session file to see subjects.</div>}
+            {data && (data.subjects||[]).map((s) => (
+              <div key={s.subject}
+                   className={"subject-row" + (s.subject===subject?" active":"")}
+                   onClick={()=>setSubject(s.subject)}>
+                <span>{s.subject}</span>
+                {s.group && <span className={"pill " + (String(s.group).toLowerCase().includes('exp')?"pill-gamma":"pill-theta")}>{s.group}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <main className="main">
+        <header className="hero">
+          <h1>Gamma / theta ratio</h1>
+          <p>The dial reads this session's average γ/θ ratio across every loaded subject. Toward θ is a slower, more drifting rhythm; toward γ is a faster, more focused one.</p>
+          <Dial meanRatio={meanRatio} />
+        </header>
+
+        <div className="kpi-row">
+          <div className="kpi"><div className="kpi-val">{data ? Math.round(kpiSubjects) : '—'}</div><div className="kpi-lbl">Subjects</div></div>
+          <div className="kpi"><div className="kpi-val">{data ? Math.round(kpiProbes) : '—'}</div><div className="kpi-lbl">Probe epochs</div></div>
+          <div className="kpi"><div className="kpi-val">{fmt(meanRatio)}</div><div className="kpi-lbl">Mean γ/θ ratio</div></div>
+          <div className="kpi"><div className="kpi-val">{modelGap!=null ? fmt(kpiGap,3) : '—'}</div><div className="kpi-lbl">Interpretable vs. black-box gap</div></div>
+        </div>
+
+        <TabBar tabs={TABS} active={tab} onChange={setTab} />
+
+        {tab==='explorer' && (
+          <section className="panel">
+            <h2>Per-subject probe trace</h2>
+            <p className="desc">Gamma/theta ratio (solid line) against self-reported concentration rating (dashed line) at each probe in this subject's session.</p>
+            <div className="card">
+              {currentSubject
+                ? <LineChart subjectKey={currentSubject.subject}
+                    points={(currentSubject.probes||[]).map(p=>({x:p.probe_index,y:p.minimal_ratio}))}
+                    points2={(currentSubject.probes||[]).map(p=>({x:p.probe_index,y:p.concentration_rating}))} />
+                : <div className="empty">No subject selected.</div>}
+            </div>
+            <div className="card table-card">
+              <table>
+                <thead><tr><th>Probe</th><th>Session</th><th>Ratio</th><th>PAC</th><th>Conc.</th><th>MW</th><th>Tired</th></tr></thead>
+                <tbody>
+                  {(currentSubject?.probes||[]).map(p => (
+                    <tr key={p.probe_index}>
+                      <td>{p.probe_index}</td><td>{p.session}</td>
+                      <td>{fmt(p.minimal_ratio)}</td><td>{fmt(p.minimal_pac,3)}</td>
+                      <td>{fmt(p.concentration_rating,0)}</td><td>{fmt(p.mind_wandering_rating,0)}</td><td>{fmt(p.tiredness_rating,0)}</td>
+                    </tr>
+                  ))}
+                  {!currentSubject && <tr><td colSpan="7" className="empty">—</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {tab==='group' && (() => {
+          const gs = data?.group_summary || {};
+          const keys = Object.keys(gs);
+          return (
+            <section className="panel">
+              <h2>Experienced vs novice meditators</h2>
+              <p className="desc">Group-level averages — a weaker test than the within-subject result since group is confounded with other traits, but useful context.</p>
+              <div className="two-col">
+                <div className="card"><BarChart items={keys.map(k=>({label:k, value:gs[k].mean_ratio, cls:k.includes('exp')?'bar-gamma':'bar-theta'}))} /></div>
+                <div className="card table-card">
+                  <table>
+                    <thead><tr><th>Group</th><th>N subj</th><th>N probes</th><th>Ratio</th><th>PAC</th><th>Conc.</th></tr></thead>
+                    <tbody>
+                      {keys.length ? keys.map(k => (
+                        <tr key={k}><td>{k}</td><td>{gs[k].n_subjects}</td><td>{gs[k].n_probes}</td><td>{fmt(gs[k].mean_ratio)}</td><td>{fmt(gs[k].mean_pac,3)}</td><td>{fmt(gs[k].mean_concentration)}</td></tr>
+                      )) : <tr><td colSpan="6" className="empty">This file has no group_summary.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
+        {tab==='models' && (
+          <section className="panel">
+            <h2>Interpretable vs black-box shootout</h2>
+            <p className="desc">Leave-one-subject-out cross-validated score: the 2-feature ratio+PAC model against Random Forest and MLP trained on full-scalp 5-band power. A small gap supports the project's core hypothesis.</p>
+            <div className="card">
+              <BarChart horizontal items={(data?.model_comparison||[]).map((m,i)=>({label:NICE_MODEL_NAMES[m.model]||m.model, value:m.score, cls:i===0?'bar-theta':'bar-neutral'}))} />
+            </div>
+          </section>
+        )}
+
+        {tab==='electrodes' && (
+          <section className="panel">
+            <h2>How few electrodes can we get away with?</h2>
+            <p className="desc">Effect of the gamma/theta ratio on concentration rating, per electrode set — minimal (2 electrodes), frontal-theta, and posterior-gamma clusters.</p>
+            <div className="card"><BarChart items={(data?.electrode_minimalism||[]).map(e=>({label:`${e.electrode_set} (${e.n_electrodes})`, value:e.coef, cls:'bar-gamma'}))} /></div>
+          </section>
+        )}
+
+        {tab==='shap' && (
+          <section className="panel">
+            <h2>Is the black-box model actually using theta/gamma?</h2>
+            <p className="desc">SHAP feature importance for the Random Forest model — sanity check that it leans on the bands this project is testing, not an artifact.</p>
+            <div className="card"><BarChart horizontal items={[...(data?.shap_importance||[])].sort((a,b)=>b.importance-a.importance).map(s=>({label:s.feature, value:s.importance, cls:'bar-neutral'}))} /></div>
+          </section>
+        )}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<style>
+  .app{ display:flex; min-height:100vh; }
+
+  .rail{ width:264px; min-width:264px; background:var(--panel); border-right:1px solid var(--line-strong); height:100vh; position:sticky; top:0; display:flex; flex-direction:column; }
+  .rail-head{ padding:20px 18px 16px; border-bottom:1px solid var(--line); }
+  .wordmark{ display:flex; align-items:center; gap:7px; font-family:var(--font-display); font-weight:600; font-size:22px; color:var(--paper); }
+  .wordmark-mark{ color:var(--theta); flex-shrink:0; }
+  .wordmark-sub{ font-family:var(--font-mono); font-size:13px; color:var(--dim); margin-top:5px; letter-spacing:0.02em; }
+
+  .rail-block{ padding:16px; border-bottom:1px solid var(--line); }
+  .rail-subjects{ flex:1; overflow-y:auto; border-bottom:none; }
+  .rail-label{ font-family:var(--font-body); font-size:14px; color:var(--dim); margin-bottom:9px; }
+
+  .loadzone{ display:flex; align-items:center; gap:10px; padding:13px 14px; border:1px dashed var(--line-strong); border-radius:3px; cursor:pointer; color:var(--dim); transition:border-color 0.2s, color 0.2s; }
+  .loadzone:hover{ border-color:var(--theta); color:var(--paper); }
+  .loadzone.drag{ border-color:var(--gamma); color:var(--paper); background:rgba(91,146,170,0.07); }
+  .loadzone-icon{ flex-shrink:0; }
+  .loadzone-text{ font-size:14.5px; line-height:1.4; color:var(--paper); }
+  .loadzone-text span{ color:var(--dim); font-size:13px; }
+  .status{ font-family:var(--font-mono); font-size:13px; color:var(--gamma); margin-top:9px; min-height:13px; }
+
+  .subject-list{ display:flex; flex-direction:column; gap:1px; }
+  .subject-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; font-family:var(--font-mono); font-size:14.5px; cursor:pointer; border-left:2px solid transparent; transition:background 0.15s; }
+  .subject-row:hover{ background:var(--panel-hi); }
+  .subject-row.active{ background:var(--panel-hi); border-left-color:var(--theta); font-weight:600; color:var(--paper); }
+  .pill{ font-family:var(--font-mono); font-size:12px; padding:1px 6px; border-radius:2px; border:1px solid; letter-spacing:0.02em; flex-shrink:0; }
+  .pill-theta{ color:var(--theta); border-color:rgba(201,138,70,0.5); }
+  .pill-gamma{ color:var(--gamma); border-color:rgba(91,146,170,0.5); }
+
+  .main{ flex:1; min-width:0; }
+  .hero{ padding:28px 36px 22px; border-bottom:1px solid var(--line); }
+  .hero h1{ font-family:var(--font-display); font-size:32px; font-weight:600; color:var(--paper); }
+  .hero p{ font-size:15.5px; line-height:1.55; color:var(--dim); max-width:58ch; margin-top:9px; }
+
+  .dial-wrap{ display:flex; flex-direction:column; align-items:center; margin:20px auto 0; max-width:280px; }
+  .dial-svg{ width:100%; height:auto; overflow:visible; }
+  .dial-rim{ fill:none; stroke:var(--line-strong); stroke-width:1; }
+  .dial-tick{ stroke:var(--faint); stroke-width:1; }
+  .dial-tick-major{ stroke:var(--dim); stroke-width:1.4; }
+  .dial-tick-label{ fill:var(--dim); font-family:var(--font-mono); font-size:11px; }
+  .dial-end-label{ font-family:var(--font-mono); font-size:12px; letter-spacing:0.02em; }
+  .dial-needle-g{ transition:transform 0.9s cubic-bezier(.22,.85,.2,1); }
+  .dial-needle{ stroke-width:2.6; stroke-linecap:round; }
+  .dial-hub{ fill:var(--panel); stroke:var(--dim); stroke-width:1.2; }
+  .dial-readout{ text-align:center; margin-top:2px; }
+  .dial-readout-val{ font-family:var(--font-mono); font-size:32px; font-weight:500; color:var(--paper); }
+  .dial-readout-lbl{ font-family:var(--font-body); font-size:13px; color:var(--dim); margin-top:2px; }
+
+  .kpi-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); border-bottom:1px solid var(--line); }
+  .kpi{ padding:15px 24px; border-right:1px solid var(--line); }
+  .kpi:last-child{ border-right:none; }
+  .kpi-val{ font-family:var(--font-mono); font-size:27px; font-weight:500; color:var(--paper); }
+  .kpi-lbl{ font-family:var(--font-body); font-size:14px; color:var(--dim); margin-top:3px; }
+
+  .tabbar{ position:relative; display:flex; gap:2px; padding:14px 36px 0; border-bottom:1px solid var(--line); }
+  .tab-indicator{ position:absolute; bottom:-1px; height:2px; background:var(--theta); transition:transform 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1); }
+  .tab{ font-family:var(--font-body); font-weight:500; background:none; border:none; color:var(--dim); font-size:15.5px; padding:8px 14px 10px; cursor:pointer; transition:color 0.2s; }
+  .tab:hover{ color:var(--paper); }
+  .tab.active{ color:var(--paper); font-weight:600; }
+
+  .panel{ padding:24px 36px 52px; animation:panelIn 0.35s ease; }
+  @keyframes panelIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+  .panel h2{ font-family:var(--font-display); font-size:21px; font-weight:600; color:var(--paper); margin-bottom:5px; }
+  .desc{ font-size:15px; line-height:1.5; color:var(--dim); max-width:64ch; margin-bottom:18px; }
+
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:18px 20px; margin-bottom:14px; transition:border-color 0.2s; }
+  .card:hover{ border-color:var(--line-strong); }
+  .two-col{ display:grid; grid-template-columns:1.3fr 1fr; gap:14px; }
+  @media (max-width:860px){ .two-col{ grid-template-columns:1fr; } }
+
+  table{ width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:14px; }
+  th{ text-align:left; color:var(--dim); font-weight:500; padding:6px 10px; border-bottom:1px solid var(--line-strong); font-size:13px; font-family:var(--font-body); }
+  td{ padding:7px 10px; border-bottom:1px solid var(--line); color:var(--paper); }
+  tr{ transition:background 0.15s; }
+  tr:hover td{ background:var(--panel-hi); }
+  .empty{ color:var(--dim); font-size:14.5px; padding:30px 10px; text-align:center; font-family:var(--font-body); }
+
+  .chart-measure{ width:100%; }
+  .linechart, .barchart-v, .barchart-h{ display:block; overflow:visible; }
+  .gridline{ stroke:var(--line); stroke-width:1; }
+
+  .trace-ratio{ fill:none; stroke:var(--theta); stroke-width:2.2; stroke-linejoin:round; stroke-linecap:round;
+    stroke-dasharray:2000; stroke-dashoffset:2000; animation:drawLine 1s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes drawLine{ to{ stroke-dashoffset:0; } }
+  .trace-ratio-dot{ fill:var(--theta); opacity:0; transform-box:fill-box; transform-origin:center; animation:popIn 0.25s ease forwards; }
+  .trace-rating{ fill:none; stroke:var(--gamma); stroke-width:1.8; stroke-dasharray:5,4; stroke-linecap:round;
+    opacity:0; animation:fadeInPath 0.7s ease 0.5s forwards; }
+  @keyframes fadeInPath{ to{ opacity:1; } }
+  .trace-rating-dot{ fill:var(--gamma); opacity:0; transform-box:fill-box; transform-origin:center; animation:popIn 0.25s ease forwards; }
+  @keyframes popIn{ from{ opacity:0; transform:scale(0); } to{ opacity:1; transform:scale(1); } }
+  .axis-label{ fill:var(--dim); font-size:12.5px; font-family:var(--font-mono); }
+  .axis-label-r{ fill:var(--gamma); text-anchor:start; }
+  .axis-caption{ font-size:12px; font-family:var(--font-mono); }
+  .axis-caption-theta{ fill:var(--theta); }
+  .axis-caption-gamma{ fill:var(--gamma); }
+
+  .barchart-v .baseline{ stroke:var(--line-strong); stroke-width:1; }
+  .bar-theta{ fill:var(--theta); }
+  .bar-gamma{ fill:var(--gamma); }
+  .bar-neutral{ fill:var(--dim); opacity:0.55; }
+  .bar-label-v{ fill:var(--dim); font-size:12.5px; font-family:var(--font-mono); }
+  .bar-label-h{ fill:var(--paper); font-size:14px; font-family:var(--font-body); }
+  .bar-value{ fill:var(--dim); font-size:12.5px; font-family:var(--font-mono); }
+</style>
+</body>
+</html>
