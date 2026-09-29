@@ -12,8 +12,8 @@ Then a SHAP audit on (B) to check it's actually leaning on theta/gamma power
 and not some artifact.
 
 Usage:
-    python src/05_ml_pipeline.py --bids_root data/ds001787 --task classify
-    python src/05_ml_pipeline.py --bids_root data/ds001787 --task regress
+    python src/model_comparison.py --bids_root data/ds001787 --task classify
+    python src/model_comparison.py --bids_root data/ds001787 --task regress
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from utils import Paths  # noqa: E402
+from config import Paths  # noqa: E402
 
 INTERPRETABLE_FEATURES = ["minimal_ratio", "minimal_pac"]
 BLACKBOX_FEATURES = [
@@ -154,7 +154,7 @@ def main() -> None:
     paths = Paths.from_root(args.bids_root)
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
-        raise SystemExit(f"{feat_path} not found -- run 03_features.py first.")
+        raise SystemExit(f"{feat_path} not found -- run extract_features.py first.")
     df = pd.read_parquet(feat_path)
 
     outcome = "group_binary" if args.task == "classify" else "concentration_rating"
@@ -166,7 +166,7 @@ def main() -> None:
                 "--task classify.")
         raise SystemExit(
             "concentration_rating missing -- fill it in during "
-            "02_preprocess.py first.")
+            "preprocess.py first.")
 
     needed = INTERPRETABLE_FEATURES + BLACKBOX_FEATURES + [outcome, "subject"]
     df = df.dropna(subset=[c for c in needed if c in df.columns])

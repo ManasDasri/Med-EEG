@@ -30,7 +30,7 @@ ALL_BANDS = {
 # This dataset's channels.tsv uses BioSemi's own A1-A32/B1-B32 numbering,
 # not standard 10-20 names. This is the standard, well-documented BioSemi
 # 64-channel equivalence (same order as MNE's built-in "biosemi64" montage).
-# 02_preprocess.py renames channels using this dict right after loading the
+# preprocess.py renames channels using this dict right after loading the
 # raw file, so everything downstream can just use normal names like "Fz".
 BIOSEMI64_TO_1020 = {
     "A1": "Fp1", "A2": "AF7", "A3": "AF3", "A4": "F1", "A5": "F3",
@@ -49,7 +49,7 @@ BIOSEMI64_TO_1020 = {
     "B31": "PO4", "B32": "O2",
 }
 # Non-EEG channels present in this dataset's channels.tsv -- these get
-# marked with their real type (eog/misc/etc) in 02_preprocess.py so
+# marked with their real type (eog/misc/etc) in preprocess.py so
 # filtering/ICA/band-power code doesn't treat them as EEG signal.
 # EXG1/EXG2 are typically mastoid references, EXG3-6 are EOG electrodes.
 NON_EEG_CHANNELS = {
@@ -80,7 +80,7 @@ PROBE_LOOKBACK_S = 120.0  # analyze the ~2 min preceding each self-report probe
 # --- Expected BIDS event / probe naming ----------------------------------
 # CONFIRM these against the actual *_events.tsv trial_type column for this
 # dataset before trusting downstream code -- BIDS event naming for probe
-# questions varies by upload version. 01_load_bids.py prints unique
+# questions varies by upload version. inspect_dataset.py prints unique
 # trial_type values for exactly this reason; don't skip that step.
 PROBE_EVENT_KEYWORDS = ("probe", "concentration", "mind_wandering", "rating")
 

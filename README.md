@@ -70,17 +70,17 @@ dashboard_data.json → dashboard.html
 
 ```
 src/
-  utils.py                     shared constants: bands, channel maps, paths
-  01_load_bids.py              sanity-check the BIDS layout, subjects, probe events
-  02_preprocess.py             filter, ICA, epoch around probes
-  03_features.py               band power, gamma/theta ratio, PAC per electrode/cluster
-  04_stats_analysis.py         mixed-effects models + electrode-minimalism curve
-  05_ml_pipeline.py            LOSO-CV model shootout + SHAP audit
-  06_export_dashboard_data.py  bundle results into dashboard_data.json
-  07_followup_analysis.py      follow-ups: delta power, tiredness, random slopes, expertise
+  config.py                     shared constants: bands, channel maps, paths
+  inspect_dataset.py              sanity-check the BIDS layout, subjects, probe events
+  preprocess.py             filter, ICA, epoch around probes
+  extract_features.py               band power, gamma/theta ratio, PAC per electrode/cluster
+  mixed_effects_stats.py         mixed-effects models + electrode-minimalism curve
+  model_comparison.py            LOSO-CV model shootout + SHAP audit
+  export_dashboard.py  bundle results into dashboard_data.json
+  followup_analysis.py      follow-ups: delta power, tiredness, random slopes, expertise
 dashboard.html                 NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json     sample data for the dashboard
-meditation_pipeline.py         original single-file KNN prototype
+knn_prototype.py         original single-file KNN prototype
 requirements.txt
 ```
 
@@ -100,13 +100,13 @@ Run the steps in order. Each writes intermediates to
 `data/ds001787/derivatives/neurodial/`, so you can resume mid-pipeline.
 
 ```bash
-python src/01_load_bids.py              --bids_root data/ds001787
-python src/02_preprocess.py             --bids_root data/ds001787   # --subjects / --limit for a quick run
-python src/03_features.py               --bids_root data/ds001787
-python src/04_stats_analysis.py         --bids_root data/ds001787
-python src/05_ml_pipeline.py            --bids_root data/ds001787 --task classify   # or --task regress
-python src/06_export_dashboard_data.py  --bids_root data/ds001787
-python src/07_followup_analysis.py      --bids_root data/ds001787   # optional
+python src/inspect_dataset.py              --bids_root data/ds001787
+python src/preprocess.py             --bids_root data/ds001787   # --subjects / --limit for a quick run
+python src/extract_features.py               --bids_root data/ds001787
+python src/mixed_effects_stats.py         --bids_root data/ds001787
+python src/model_comparison.py            --bids_root data/ds001787 --task classify   # or --task regress
+python src/export_dashboard.py  --bids_root data/ds001787
+python src/followup_analysis.py      --bids_root data/ds001787   # optional
 ```
 
 ### Dashboard

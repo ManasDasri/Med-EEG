@@ -2,7 +2,7 @@
 that dashboard.html can load with a file picker (no server needed).
 
 Usage:
-    python src/06_export_dashboard_data.py --bids_root data/ds001787
+    python src/export_dashboard.py --bids_root data/ds001787
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from utils import Paths  # noqa: E402
+from config import Paths  # noqa: E402
 
 
 def safe_read_csv(path: Path) -> pd.DataFrame | None:
@@ -64,7 +64,7 @@ def _sanitize_for_json(obj):
 def build_subjects_payload(features: pd.DataFrame,
                             participants: pd.DataFrame | None) -> list[dict]:
     if participants is not None and "participant_id" in participants.columns:
-        # 03_features.py may already have merged 'group' in -- only pull
+        # extract_features.py may already have merged 'group' in -- only pull
         # columns that aren't already present, so we never end up with a
         # group_x/group_y collision.
         wanted = ["group", "age", "gender"]
@@ -109,7 +109,7 @@ def _safe_mean(series) -> float | None:
 def build_group_summary(features: pd.DataFrame,
                          participants: pd.DataFrame | None) -> dict:
     if "group" in features.columns:
-        merged = features  # 03_features.py already merged it in
+        merged = features  # extract_features.py already merged it in
     elif participants is not None and "group" in participants.columns:
         merged = features.merge(
             participants[["participant_id", "group"]],
@@ -139,7 +139,7 @@ def main() -> None:
     paths = Paths.from_root(args.bids_root)
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
-        raise SystemExit(f"{feat_path} not found -- run 03_features.py "
+        raise SystemExit(f"{feat_path} not found -- run extract_features.py "
                           f"(and ideally 04/05) first.")
     features = pd.read_parquet(feat_path)
 
@@ -150,7 +150,7 @@ def main() -> None:
         print("[warn] no participants.tsv found -- group/age/gender and "
               "the group-comparison panel will be empty in the dashboard.")
 
-    # 05_ml_pipeline.py now writes task-specific filenames
+    # model_comparison.py now writes task-specific filenames
     # (model_comparison_regress.csv / model_comparison_classify.csv) so a
     # --task regress run and a --task classify run don't overwrite each
     # other. Prefer the regress variant for the dashboard's headline

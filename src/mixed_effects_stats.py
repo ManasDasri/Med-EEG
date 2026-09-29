@@ -6,7 +6,7 @@ whether gamma/theta ratio and PAC predict a person's OWN moment-to-moment
 concentration rating, treating subject as a random effect.
 
 Usage:
-    python src/04_stats_analysis.py --bids_root data/ds001787
+    python src/mixed_effects_stats.py --bids_root data/ds001787
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ import pandas as pd
 import statsmodels.formula.api as smf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from utils import Paths  # noqa: E402
+from config import Paths  # noqa: E402
 
 
 def fit_lme(df: pd.DataFrame, outcome: str, predictors: list[str]
@@ -35,7 +35,7 @@ def group_contrast(df: pd.DataFrame, feature: str, group_col: str = "group"
     if group_col not in df.columns:
         print(f"[skip] no '{group_col}' column -- merge participants.tsv "
               f"group labels into features.parquet first (see "
-              f"01_load_bids.py participants.tsv inspection).")
+              f"inspect_dataset.py participants.tsv inspection).")
         return
     means = df.groupby(group_col)[feature].mean()
     print(f"\n{feature} by group:\n{means}")
@@ -44,7 +44,7 @@ def group_contrast(df: pd.DataFrame, feature: str, group_col: str = "group"
 def electrode_minimalism_curve(df: pd.DataFrame, outcome: str) -> pd.DataFrame:
     """Compare how much variance in the outcome each electrode-set's ratio
     explains, as a quick proxy for the fuller LOSO-CV comparison in
-    05_ml_pipeline.py."""
+    model_comparison.py."""
     results = []
     for cluster in ["minimal", "frontal_theta", "posterior_gamma"]:
         col = f"{cluster}_ratio"
@@ -75,13 +75,13 @@ def main() -> None:
     paths = Paths.from_root(args.bids_root)
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
-        raise SystemExit(f"{feat_path} not found -- run 03_features.py first.")
+        raise SystemExit(f"{feat_path} not found -- run extract_features.py first.")
     df = pd.read_parquet(feat_path)
 
     if df["concentration_rating"].isna().all():
         raise SystemExit(
             "concentration_rating is entirely NaN -- go back to "
-            "02_preprocess.py and fill in the actual rating values from "
+            "preprocess.py and fill in the actual rating values from "
             "events.tsv before running any stats.")
 
     df = df.dropna(subset=["concentration_rating", "minimal_ratio"])

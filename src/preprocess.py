@@ -7,7 +7,7 @@ probe_labels.csv mapping each epoch to its subject, session, probe time, and
 / mind-wandering scores.
 
 Usage:
-    python src/02_preprocess.py --bids_root data/ds001787
+    python src/preprocess.py --bids_root data/ds001787
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from utils import (BANDPASS_HIGH_HZ, BANDPASS_LOW_HZ, BIOSEMI64_TO_1020,
+from config import (BANDPASS_HIGH_HZ, BANDPASS_LOW_HZ, BIOSEMI64_TO_1020,
                     EPOCH_LENGTH_S, EPOCH_OVERLAP_S, N_PROBE_QUESTIONS,
                     NOTCH_FREQ_HZ, NON_EEG_CHANNELS, PROBE_LOOKBACK_S,
                     PROBE_STIMULUS_VALUE, RESPONSE_VALUE_TO_RATING,
@@ -88,7 +88,7 @@ def preprocess_raw(raw: mne.io.BaseRaw) -> mne.io.BaseRaw:
 
 def find_probe_events(events_df: pd.DataFrame) -> pd.DataFrame:
     """Return rows of events_df that are probe onsets: trial_type=='stimulus'
-    with value==128 (per Brandmeyer & Delorme 2018 -- see utils.py for the
+    with value==128 (per Brandmeyer & Delorme 2018 -- see config.py for the
     full explanation). Returns rows with their original integer position
     preserved as the index, since decode_probe_responses() needs it to look
     ahead at the following response rows."""
@@ -106,7 +106,7 @@ def find_probe_events(events_df: pd.DataFrame) -> pd.DataFrame:
             f"No probe events found (trial_type=='stimulus', "
             f"value=={PROBE_STIMULUS_VALUE}). Open this subject's "
             f"events.tsv and confirm the stimulus/value convention matches "
-            f"utils.py -- some re-exports may use a different value.")
+            f"config.py -- some re-exports may use a different value.")
     return probes
 
 
