@@ -49,12 +49,16 @@ group label — that's what this project exploits.
 ## Pipeline
 
 ```
-raw .bdf (BIDS)                 mne_bids.read_raw_bids
+raw .bdf (BIDS)                 mne.io.read_raw_bdf, 10-20 channel names
     │
-Bandpass 1–45 Hz + notch        mne.filter
-Bad-channel interp + ICA        eye / muscle artifact removal
+Bandpass 1–45 Hz + mains notch  line frequency read from the BIDS sidecar
+Bad channels (LOF) → interpolate
+Average reference               BioSemi records reference-free (CMS/DRL)
+ICA                             remove eye + muscle components
     │
-Epoch before each probe         2 s windows, 50% overlap, ~2 min lookback
+Epoch before each probe         2 s windows, 50% overlap, up to 2 min back,
+                                never overlapping the previous probe's Q&A
+Reject noisy epochs             peak-to-peak > 150 µV
     │
 Welch PSD → delta…gamma power, gamma/theta ratio, Tort MI (PAC)
     │
@@ -70,17 +74,19 @@ dashboard_data.json → dashboard.html
 
 ```
 src/
-  config.py                     shared constants: bands, channel maps, paths
-  inspect_dataset.py              sanity-check the BIDS layout, subjects, probe events
-  preprocess.py             filter, ICA, epoch around probes
-  extract_features.py               band power, gamma/theta ratio, PAC per electrode/cluster
-  mixed_effects_stats.py         mixed-effects models + electrode-minimalism curve
-  model_comparison.py            LOSO-CV model shootout + SHAP audit
-  export_dashboard.py  bundle results into dashboard_data.json
-  followup_analysis.py      follow-ups: delta power, tiredness, random slopes, expertise
-dashboard.html                 NeuroDial results dashboard (open directly in a browser)
-dashboard_data.sample.json     sample data for the dashboard
-knn_prototype.py         original single-file KNN prototype
+  config.py               shared constants: bands, channel maps, event codes, paths
+  inspect_dataset.py      sanity-check the BIDS layout, subjects, probe events
+  preprocess.py           filter, re-reference, ICA, epoch before each probe
+  extract_features.py     band power, gamma/theta ratio, PAC per electrode/cluster
+  mixed_effects_stats.py  mixed-effects models + electrode-minimalism curve
+  model_comparison.py     LOSO-CV model shootout + SHAP audit
+  export_dashboard.py     bundle results into dashboard_data.json
+  followup_analysis.py    follow-ups: delta power, tiredness, random slopes, expertise
+tests/
+  test_preprocess.py      probe/answer decoding checks (python tests/test_preprocess.py)
+dashboard.html            NeuroDial results dashboard (open directly in a browser)
+dashboard_data.sample.json  sample data for the dashboard
+knn_prototype.py          original single-file KNN prototype
 requirements.txt
 ```
 
@@ -92,22 +98,26 @@ cd Med-EEG
 python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# download the dataset (~5 GB)
+# download the dataset (~6 GB)
 openneuro-py download --dataset ds001787 --target_dir data/ds001787
 ```
 
-Run the steps in order. Each writes intermediates to
+Run the steps in this order. Each writes intermediates to
 `data/ds001787/derivatives/neurodial/`, so you can resume mid-pipeline.
 
 ```bash
-python src/inspect_dataset.py              --bids_root data/ds001787
-python src/preprocess.py             --bids_root data/ds001787   # --subjects / --limit for a quick run
-python src/extract_features.py               --bids_root data/ds001787
-python src/mixed_effects_stats.py         --bids_root data/ds001787
-python src/model_comparison.py            --bids_root data/ds001787 --task classify   # or --task regress
-python src/export_dashboard.py  --bids_root data/ds001787
-python src/followup_analysis.py      --bids_root data/ds001787   # optional
+python src/inspect_dataset.py      --bids_root data/ds001787
+python src/preprocess.py           --bids_root data/ds001787   # --subjects / --limit for a quick run
+python src/extract_features.py     --bids_root data/ds001787
+python src/mixed_effects_stats.py  --bids_root data/ds001787
+python src/model_comparison.py     --bids_root data/ds001787 --task classify   # or --task regress
+python src/export_dashboard.py     --bids_root data/ds001787
+python src/followup_analysis.py    --bids_root data/ds001787   # optional
 ```
+
+After preprocessing, check `preprocessing_qc.csv` in the derivatives folder:
+it lists bad channels, removed ICA components and the epoch rejection rate
+for every recording.
 
 ### Dashboard
 

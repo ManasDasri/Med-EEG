@@ -67,15 +67,39 @@ POSTERIOR_GAMMA_CHS = ["Pz", "POz", "Oz"]
 MINIMAL_CH_SET = FRONTAL_MIDLINE_THETA_CHS[:1] + POSTERIOR_GAMMA_CHS[:1]  # e.g. Fz + Pz
 
 # --- Preprocessing ------------------------------------------------------
-NOTCH_FREQ_HZ = 50.0  # EU mains; use 60.0 if recorded in the US
+# Fallback only: preprocess.py reads the real value from each recording's
+# *_eeg.json sidecar ("PowerLineFrequency" -- 50 Hz for this dataset,
+# recorded in Toulouse, France).
+NOTCH_FREQ_HZ = 50.0
 BANDPASS_LOW_HZ = 1.0
 BANDPASS_HIGH_HZ = 45.0
-RESAMPLE_HZ = 256.0  # dataset is already delivered at 256 Hz
+RESAMPLE_HZ = 256.0  # dataset is already delivered at 256 Hz; higher gets downsampled
+
+# ICA: 20 components on 64 channels captures the big artifact sources (blinks,
+# eye movements, muscle) without splitting brain activity into noise.
+ICA_N_COMPONENTS = 20
+ICA_RANDOM_STATE = 42
+# The dataset declares no EOG channels (EOGChannelCount=0 in the sidecar), so
+# blink/eye components are found by correlation with the most frontal scalp
+# electrodes -- they sit right above the eyes and pick up blinks strongly.
+EOG_PROXY_CHS = ["Fp1", "Fp2"]
+
+# Epochs whose peak-to-peak amplitude on any EEG channel exceeds this (after
+# ICA) are dropped as residual artifact. 150 uV is a common post-ICA limit;
+# lower it if features look noisy, raise it if too many epochs get dropped
+# (the QC report shows the drop rate per recording).
+REJECT_PEAK_TO_PEAK_V = 150e-6
+FLAT_PEAK_TO_PEAK_V = 1e-6  # anything flatter than this is a dead channel
 
 # --- Epoching ------------------------------------------------------------
 EPOCH_LENGTH_S = 2.0
 EPOCH_OVERLAP_S = 1.0
-PROBE_LOOKBACK_S = 120.0  # analyze the ~2 min preceding each self-report probe
+PROBE_LOOKBACK_S = 120.0  # analyze up to ~2 min preceding each self-report probe
+# Probes are as little as 16 s apart (median ~95 s), so a fixed 120 s lookback
+# would reach back into the PREVIOUS probe's question/answer period (voice
+# prompts, button presses, eye movements). Each window therefore starts no
+# earlier than the previous probe's last event plus this settling buffer.
+POST_PROBE_BUFFER_S = 10.0
 
 # --- Expected BIDS event / probe naming ----------------------------------
 # CONFIRM these against the actual *_events.tsv trial_type column for this
@@ -85,21 +109,25 @@ PROBE_LOOKBACK_S = 120.0  # analyze the ~2 min preceding each self-report probe
 PROBE_EVENT_KEYWORDS = ("probe", "concentration", "mind_wandering", "rating")
 
 # --- Probe / self-report event decoding -----------------------------------
-# From Brandmeyer & Delorme (2018), the source paper for this dataset: a
-# probe interrupts meditation with 3 questions, answered on a 0-3 scale via
-# button press. In the BIDS events.tsv this shows up as a trial_type=
-# "stimulus" row with value=128 (the probe onset), immediately followed by
-# 3 trial_type="response" rows -- one per question, in this fixed order:
-#   Q1: "rate the depth of your meditation"     -> concentration_rating
-#   Q2: "rate the depth of your mind wandering" -> mind_wandering_rating
-#   Q3: "rate how tired you are"                -> tiredness_rating
-# The response `value` column holds a button-box bit code (1/2/4/8), not
-# the 0-3 rating directly -- standard encoding is button k -> 2^(k-1), so
-# rating = log2(code). Verify this against your own data: if ratings look
-# skewed or never hit 0, double check by finding a row with value==1.
+# Verified against the dataset's own experiment script
+# (code/run_mw_experiment6.m) and all 40 events.tsv files. A probe is a
+# trial_type="stimulus" row with value=128, followed by trial_type="response"
+# rows answering up to 3 voice-prompted questions in this FIXED order:
+#   Q1: "rate your meditation"     -> concentration_rating
+#   Q2: "rate your mind wandering" -> mind_wandering_rating
+#   Q3: "rate how tired you are"   -> tiredness_rating
+# Pressing digit key k sends code 2**k, so rating = log2(code); in practice
+# only 2/4/8 (ratings 1-3) occur. Only ~37% of probes have all 3 answers:
+# a non-digit key cancels the remaining questions WITHOUT sending a code, so
+# missing answers are always the trailing ones and position still tells you
+# which question an answer belongs to.
 PROBE_STIMULUS_VALUE = 128
 RESPONSE_VALUE_TO_RATING = {1: 0, 2: 1, 4: 2, 8: 3}
 N_PROBE_QUESTIONS = 3
+# Answers normally arrive 3-10 s apart (99th percentile 9.3 s). A "response"
+# arriving longer than this after the previous event is a stray button press
+# during meditation, not an answer, and ends the probe's answer sequence.
+MAX_RESPONSE_GAP_S = 30.0
 
 GROUP_MAP_HINT = (
     "Group (experienced vs novice) typically lives in participants.tsv, "
