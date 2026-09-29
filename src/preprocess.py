@@ -35,7 +35,8 @@ from mne_bids import get_entities_from_fname
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import (BANDPASS_HIGH_HZ, BANDPASS_LOW_HZ, BIOSEMI64_TO_1020,
-                    EOG_PROXY_CHS, EPOCH_LENGTH_S, EPOCH_OVERLAP_S,
+                    EOG_MIN_CORR, EOG_MIN_FRONTAL_SHARE, EOG_PROXY_CHS,
+                    EPOCH_LENGTH_S, EPOCH_OVERLAP_S, EYE_MAP_CHS,
                     FLAT_PEAK_TO_PEAK_V, ICA_N_COMPONENTS, ICA_RANDOM_STATE,
                     MAX_RESPONSE_GAP_S, N_PROBE_QUESTIONS, NON_EEG_CHANNELS,
                     NOTCH_FREQ_HZ, POST_PROBE_BUFFER_S, PROBE_LOOKBACK_S,
@@ -88,6 +89,21 @@ def read_line_freq(raw_path: Path) -> float:
 
 # --- 2-5. Cleaning the continuous signal -------------------------------------
 
+def find_eye_components(ica: mne.preprocessing.ICA, raw: mne.io.BaseRaw
+                        ) -> list[int]:
+    """ICA components that are eye activity: their time course follows the
+    frontal channels (blinks, eye movements) AND their scalp map is
+    concentrated over the eyes. Needing both keeps frontal-midline theta and
+    posterior alpha components -- brain signal -- out (see config.py)."""
+    _, scores = ica.find_bads_eog(raw, ch_name=EOG_PROXY_CHS)
+    corr = np.abs(np.atleast_2d(scores)).max(axis=0)
+    maps = ica.get_components()  # (n_channels, n_components)
+    front = [ica.info["ch_names"].index(ch) for ch in EYE_MAP_CHS]
+    frontal_share = (maps[front] ** 2).sum(axis=0) / (maps ** 2).sum(axis=0)
+    return np.flatnonzero((corr >= EOG_MIN_CORR)
+                          & (frontal_share >= EOG_MIN_FRONTAL_SHARE)).tolist()
+
+
 def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
                      ) -> tuple[mne.io.BaseRaw, dict]:
     """Filter, repair bad channels, average-reference, and ICA-clean the whole
@@ -112,7 +128,7 @@ def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
                                 max_iter="auto")
     # decim=5 fits on every 5th sample: same components, ~5x faster.
     ica.fit(raw, picks="eeg", decim=5)
-    eog_idx, _ = ica.find_bads_eog(raw, ch_name=EOG_PROXY_CHS)
+    eog_idx = find_eye_components(ica, raw)
     # Muscle matters most for this project: EMG is broadband and lands right
     # in the 30-45 Hz gamma band the biomarker is built on.
     muscle_idx, _ = ica.find_bads_muscle(raw)

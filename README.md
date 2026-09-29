@@ -60,9 +60,11 @@ Epoch before each probe         2 s windows, 50% overlap, up to 2 min back,
                                 never overlapping the previous probe's Q&A
 Reject noisy epochs             peak-to-peak > 150 µV
     │
-Welch PSD → delta…gamma power, gamma/theta ratio, Tort MI (PAC)
+Welch spectrum per epoch        band power (absolute + relative) per region,
+                                gamma/theta ratio, 1/f slope, alpha asymmetry
+Theta–gamma PAC per cluster     Tort MI, bias-corrected + surrogate z-score
     │
-Feature table (subject × probe × electrode set)
+Feature tables                  one row per probe + one row per epoch
     │
 Stats: LME  concentration ~ ratio + PAC + (1 | subject)
 ML:    LOSO-CV, interpretable vs RF vs MLP, SHAP audit
@@ -77,13 +79,14 @@ src/
   config.py               shared constants: bands, channel maps, event codes, paths
   inspect_dataset.py      sanity-check the BIDS layout, subjects, probe events
   preprocess.py           filter, re-reference, ICA, epoch before each probe
-  extract_features.py     band power, gamma/theta ratio, PAC per electrode/cluster
+  extract_features.py     spectral features per region/cluster + PAC, per probe and per epoch
   mixed_effects_stats.py  mixed-effects models + electrode-minimalism curve
   model_comparison.py     LOSO-CV model shootout + SHAP audit
   export_dashboard.py     bundle results into dashboard_data.json
   followup_analysis.py    follow-ups: delta power, tiredness, random slopes, expertise
 tests/
   test_preprocess.py      probe/answer decoding checks (python tests/test_preprocess.py)
+  test_features.py        feature checks on synthetic signals (python tests/test_features.py)
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          original single-file KNN prototype
@@ -108,7 +111,7 @@ Run the steps in this order. Each writes intermediates to
 ```bash
 python src/inspect_dataset.py      --bids_root data/ds001787
 python src/preprocess.py           --bids_root data/ds001787   # --subjects / --limit for a quick run
-python src/extract_features.py     --bids_root data/ds001787
+python src/extract_features.py     --bids_root data/ds001787   # --window_s 30 to use only the last 30 s
 python src/mixed_effects_stats.py  --bids_root data/ds001787
 python src/model_comparison.py     --bids_root data/ds001787 --task classify   # or --task regress
 python src/export_dashboard.py     --bids_root data/ds001787

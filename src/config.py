@@ -65,6 +65,47 @@ NON_EEG_CHANNELS = {
 FRONTAL_MIDLINE_THETA_CHS = ["Fz", "FCz", "Cz"]
 POSTERIOR_GAMMA_CHS = ["Pz", "POz", "Oz"]
 MINIMAL_CH_SET = FRONTAL_MIDLINE_THETA_CHS[:1] + POSTERIOR_GAMMA_CHS[:1]  # e.g. Fz + Pz
+PAC_CLUSTERS = {
+    "frontal_theta": FRONTAL_MIDLINE_THETA_CHS,
+    "posterior_gamma": POSTERIOR_GAMMA_CHS,
+    "minimal": MINIMAL_CH_SET,
+}
+
+# --- Scalp regions for spatial features --------------------------------------
+# Every one of the 64 electrodes belongs to exactly one region. The temporal
+# regions sit over the jaw/temple muscles, so their gamma power doubles as a
+# muscle-contamination signal the models (and the SHAP audit) can see.
+REGIONS = {
+    "frontal": ["Fp1", "Fpz", "Fp2", "AF7", "AF3", "AFz", "AF4", "AF8", "F7",
+                "F5", "F3", "F1", "Fz", "F2", "F4", "F6", "F8"],
+    "central": ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6", "C5", "C3",
+                "C1", "Cz", "C2", "C4", "C6"],
+    "left_temporal": ["FT7", "T7", "TP7"],
+    "right_temporal": ["FT8", "T8", "TP8"],
+    "parietal": ["CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6", "P9", "P7",
+                 "P5", "P3", "P1", "Pz", "P2", "P4", "P6", "P8", "P10"],
+    "occipital": ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2", "Iz"],
+}
+# Frontal alpha asymmetry = log alpha(right) - log alpha(left).
+ASYMMETRY_PAIR = ("F4", "F3")
+
+# --- Feature extraction ----------------------------------------------------------
+# Aperiodic (1/f) slope is fit in log-log space over this range. 30-45 Hz sits
+# above the alpha/beta peaks, where the spectrum is mostly the 1/f background.
+SLOPE_RANGE_HZ = (30.0, 45.0)
+# PAC: each 2 s epoch is band-filtered on its own, then PAC_EDGE_S is cut from
+# both ends to discard filter start-up distortion. With 2 s epochs starting 1 s
+# apart, the kept middle 1 s pieces tile the window exactly once -- no seams
+# filtered over, no sample counted twice.
+PAC_EDGE_S = 0.5
+PAC_N_BINS = 18
+# Raw Tort MI is biased upward when there is little data, and windows range
+# from a few seconds to 2 minutes. Comparing against time-shifted surrogates
+# (same data, coupling destroyed) gives a z-score that is comparable across
+# window lengths.
+PAC_N_SURROGATES = 200
+PAC_RANDOM_STATE = 42
+PAC_MIN_SECONDS = 10.0  # less clean signal than this -> PAC is NaN, not a guess
 
 # --- Preprocessing ------------------------------------------------------
 # Fallback only: preprocess.py reads the real value from each recording's
@@ -83,6 +124,18 @@ ICA_RANDOM_STATE = 42
 # blink/eye components are found by correlation with the most frontal scalp
 # electrodes -- they sit right above the eyes and pick up blinks strongly.
 EOG_PROXY_CHS = ["Fp1", "Fp2"]
+# A component is "eye" only if BOTH hold (checked against the scalp maps of 6
+# recordings: every eye component had r >= 0.6 and share >= 0.54; every brain
+# component with r >= 0.45 had share <= 0.14):
+#   - |correlation| with EOG_PROXY_CHS (1-10 Hz) >= EOG_MIN_CORR
+#   - share of the component's squared map weight on the frontal-pole
+#     electrodes (EYE_MAP_CHS) >= EOG_MIN_FRONTAL_SHARE
+# MNE's default (z-score > 3 among components) missed eye components when the
+# eye signal was split across two or three of them, and removed posterior
+# ~10 Hz alpha components -- brain signal this project needs.
+EOG_MIN_CORR = 0.5
+EYE_MAP_CHS = ["Fp1", "Fpz", "Fp2", "AF7", "AF8"]
+EOG_MIN_FRONTAL_SHARE = 0.4
 
 # Epochs whose peak-to-peak amplitude on any EEG channel exceeds this (after
 # ICA) are dropped as residual artifact. 150 uV is a common post-ICA limit;
