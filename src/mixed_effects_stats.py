@@ -84,7 +84,9 @@ def main() -> None:
             "preprocess.py and fill in the actual rating values from "
             "events.tsv before running any stats.")
 
-    df = df.dropna(subset=["concentration_rating", "minimal_ratio"])
+    # minimal_pac is NaN for probes with too little signal (extract_features.py)
+    df = df.dropna(subset=["concentration_rating", "minimal_ratio",
+                           "minimal_pac"])
 
     fit_lme(df, "concentration_rating",
             ["minimal_ratio", "minimal_pac"])
