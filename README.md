@@ -80,7 +80,7 @@ src/
   07_followup_analysis.py      follow-ups: delta power, tiredness, random slopes, expertise
 dashboard.html                 NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json     sample data for the dashboard
-meditation_pipeline.py         original single-file KNN prototype (hard-coded paths)
+meditation_pipeline.py         original single-file KNN prototype
 requirements.txt
 ```
 
