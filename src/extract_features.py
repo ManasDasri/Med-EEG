@@ -223,19 +223,22 @@ def probe_features(row: dict, window_s: float | None
 
 
 def add_group_labels(df: pd.DataFrame, bids_root: Path) -> pd.DataFrame:
-    """Merge expert/novice from participants.tsv; expert -> 1, novice -> 0
-    as group_binary for model_comparison.py --task classify."""
+    """Merge expert/novice (plus age and gender) from participants.tsv;
+    expert -> 1, novice -> 0 as group_binary for model_comparison.py."""
     participants_path = bids_root / "participants.tsv"
     if not participants_path.exists():
         print("[warn] no participants.tsv found at bids_root -- "
-              "group_binary not created, --task classify won't work.")
+              "group_binary not created, --task expertise won't work.")
         return df
     participants = pd.read_csv(participants_path, sep="\t")
     if "group" not in participants.columns:
         print("[warn] participants.tsv has no 'group' column -- "
-              "group_binary not created, --task classify won't work.")
+              "group_binary not created, --task expertise won't work.")
         return df
-    df = df.merge(participants[["participant_id", "group"]],
+    # age and gender come along so model_comparison.py can check that EEG
+    # beats them: in this dataset experts are 9/11 male, novices 10/12 female.
+    extra = [c for c in ("age", "gender") if c in participants.columns]
+    df = df.merge(participants[["participant_id", "group", *extra]],
                   left_on="subject", right_on="participant_id", how="left")
     df = df.drop(columns=["participant_id"])
     # Anything other than expert/novice (typos, missing) -> NaN so it's

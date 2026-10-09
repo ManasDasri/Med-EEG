@@ -16,6 +16,8 @@ Models:
   interpretable_ratio_pac  minimal_ratio + minimal_pac, linear model
   linear_spectral          all regional spectral features, L2-regularised
   boosting_spectral        same features, gradient-boosted trees
+  baseline_*               non-EEG baselines the EEG models must beat:
+                           sex and age (expertise), time-on-task (ratings)
 followed by a SHAP audit of boosting_spectral.
 
 Writes model_comparison_<task>.csv, predictions_<task>.csv (out-of-fold
@@ -54,7 +56,13 @@ TASKS = {  # task -> (target column, trait or state)
     "mind_wandering": ("mind_wandering_rating", "state"),
 }
 INTERPRETABLE_FEATURES = ["minimal_ratio", "minimal_pac"]
-MODELS = ["interpretable_ratio_pac", "linear_spectral", "boosting_spectral"]
+# Non-EEG baselines, scored exactly like the EEG models. An EEG model only
+# means something if it beats these, not just chance: in this dataset experts
+# are 9/11 male and novices 10/12 female, and ratings drift over a session.
+BASELINES = {
+    "trait": {"baseline_sex": ["male"], "baseline_age": ["age"]},
+    "state": {"baseline_time": ["probe_onset_s"]},
+}
 
 
 def spectral_columns(df: pd.DataFrame) -> list[str]:
@@ -96,6 +104,8 @@ def prepare(df: pd.DataFrame, task: str) -> pd.DataFrame:
                          f"extract_features.py (group labels come from "
                          f"participants.tsv)")
     df = df.dropna(subset=[target]).reset_index(drop=True)
+    if "gender" in df.columns:
+        df["male"] = (df["gender"].str.upper() == "M").astype(float)
     if kind == "state":
         cols = INTERPRETABLE_FEATURES + spectral_columns(df)
         df[cols] = df.groupby(["subject", "session"])[cols].transform(
@@ -211,13 +221,19 @@ def main() -> None:
     feature_sets = {"interpretable_ratio_pac": INTERPRETABLE_FEATURES,
                     "linear_spectral": spectral_columns(df),
                     "boosting_spectral": spectral_columns(df)}
+    for name, cols in BASELINES[kind].items():
+        if all(c in df.columns for c in cols):
+            feature_sets[name] = cols
+        else:
+            print(f"[warn] {name} skipped: {cols} not in the feature table "
+                  f"(re-run extract_features.py)")
     print(f"[ok] task={args.task}: {len(df)} probes, "
           f"{df['subject'].nunique()} subjects, "
           f"{args.n_permutations} permutations per model")
 
     results, preds = [], {}
-    for name in MODELS:
-        result, preds[name] = evaluate(df, args.task, name, feature_sets[name],
+    for name, cols in feature_sets.items():
+        result, preds[name] = evaluate(df, args.task, name, cols,
                                        args.n_permutations)
         results.append(result)
         print(f"  {name:24s} {result['metric']}={result['score']:.3f}  "
@@ -229,7 +245,8 @@ def main() -> None:
         + ["n_features", "n_subjects", "n_probes"]]
     summary.to_csv(paths.derivatives / f"model_comparison_{args.task}.csv",
                    index=False)
-    best = summary.loc[summary["score"].idxmax(), "model"]
+    eeg = summary[~summary["model"].str.startswith("baseline_")]
+    best = eeg.loc[eeg["score"].idxmax(), "model"]
     pd.DataFrame({"subject": df["subject"], "session": df["session"],
                   "probe_index": df["probe_index"], "target": df[target],
                   "prediction": preds[best], "model": best}).to_csv(
