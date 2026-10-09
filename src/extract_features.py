@@ -34,10 +34,12 @@ from joblib import Parallel, delayed
 from scipy.signal import hilbert
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import (ALL_BANDS, ASYMMETRY_PAIR, BANDPASS_HIGH_HZ, GAMMA_BAND,
-                    PAC_CLUSTERS, PAC_EDGE_S, PAC_MIN_SECONDS, PAC_N_BINS,
-                    PAC_N_SURROGATES, PAC_RANDOM_STATE, REGIONS,
-                    SLOPE_RANGE_HZ, THETA_BAND, Paths)  # noqa: E402
+from config import (ALL_BANDS, ASYMMETRY_PAIR, BANDPASS_HIGH_HZ,
+                    BIOSEMI64_TO_1020, GAMMA_BAND, MAX_BAD_CHANNEL_FRACTION,
+                    MAX_EPOCH_REJECT_RATE, PAC_CLUSTERS, PAC_EDGE_S,
+                    PAC_MIN_SECONDS, PAC_N_BINS, PAC_N_SURROGATES,
+                    PAC_RANDOM_STATE, REGIONS, SLOPE_RANGE_HZ, THETA_BAND,
+                    Paths)  # noqa: E402
 
 mne.set_log_level("WARNING")
 
@@ -247,6 +249,26 @@ def add_group_labels(df: pd.DataFrame, bids_root: Path) -> pd.DataFrame:
     return df
 
 
+def exclude_poor_recordings(manifest: pd.DataFrame, qc_path: Path
+                            ) -> pd.DataFrame:
+    """Drop probes from recordings that failed the quality limits in
+    config.py (too many bad channels or rejected epochs)."""
+    if not qc_path.exists():
+        print(f"[warn] {qc_path.name} not found -- no quality exclusion")
+        return manifest
+    qc = pd.read_csv(qc_path)
+    n_eeg = len(BIOSEMI64_TO_1020)  # 64 scalp channels
+    poor = qc[(qc["n_bad_channels"] / n_eeg > MAX_BAD_CHANNEL_FRACTION)
+              | (qc["epoch_reject_rate"] > MAX_EPOCH_REJECT_RATE)]
+    for r in poor.itertuples():
+        print(f"[excluded] {r.subject} / {r.session}: {r.n_bad_channels} bad "
+              f"channels, {r.epoch_reject_rate:.0%} epochs rejected")
+    bad = set(zip(poor["subject"], poor["session"]))
+    keep = [(s, ses) not in bad
+            for s, ses in zip(manifest["subject"], manifest["session"])]
+    return manifest[keep]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bids_root", required=True, type=Path)
@@ -264,7 +286,8 @@ def main() -> None:
     if not manifest_path.exists():
         raise SystemExit(f"{manifest_path} not found -- run preprocess.py "
                          f"first.")
-    manifest = pd.read_csv(manifest_path)
+    manifest = exclude_poor_recordings(pd.read_csv(manifest_path),
+                                       paths.derivatives / "preprocessing_qc.csv")
     rows = [r for r in manifest.to_dict("records")
             if Path(r["epochs_file"]).exists()]
     if len(rows) < len(manifest):

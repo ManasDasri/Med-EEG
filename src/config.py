@@ -89,6 +89,16 @@ REGIONS = {
 # Frontal alpha asymmetry = log alpha(right) - log alpha(left).
 ASYMMETRY_PAIR = ("F4", "F3")
 
+# --- Recording exclusion (applied in extract_features.py) --------------------------
+# Decided BEFORE looking at any model results, so it can't be tuned to make
+# scores look better. A recording is left out if either limit is exceeded:
+# interpolating a quarter of the scalp makes the data smoother than reality,
+# and losing half the epochs leaves too little clean signal. sub-010 (31% and
+# 27% of channels bad: poor electrode contact, 65% of power below 4 Hz on the
+# flagged channels) is the case that prompted this.
+MAX_BAD_CHANNEL_FRACTION = 0.25
+MAX_EPOCH_REJECT_RATE = 0.5
+
 # --- Feature extraction ----------------------------------------------------------
 # Aperiodic (1/f) slope is fit in log-log space over this range. 30-45 Hz sits
 # above the alpha/beta peaks, where the spectrum is mostly the 1/f background.
