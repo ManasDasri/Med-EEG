@@ -313,8 +313,19 @@ def main() -> None:
 
     out_csv = paths.derivatives / "probe_labels.csv"
     qc_csv = paths.derivatives / "preprocessing_qc.csv"
-    all_rows: list[dict] = []
-    qc_rows: list[dict] = []
+    partial = bool(args.subjects or args.limit)
+
+    def rows_to_keep(path: Path) -> list[dict]:
+        """On a partial run, keep earlier results for the subjects NOT being
+        processed, so --subjects adds to / replaces part of the dataset
+        instead of wiping everything else."""
+        if not (partial and path.exists()):
+            return []
+        previous = pd.read_csv(path)
+        return previous[~previous["subject"].isin(subjects)].to_dict("records")
+
+    all_rows: list[dict] = rows_to_keep(out_csv)
+    qc_rows: list[dict] = rows_to_keep(qc_csv)
     failed: list[str] = []
 
     for sub in subjects:
@@ -352,10 +363,9 @@ def main() -> None:
         print(f"[warn] {n_nan}/{len(manifest)} probes have no concentration "
               f"answer (probe skipped by the participant) -- dropped "
               f"automatically in later steps.")
-    if args.subjects or args.limit:
-        print("[note] this was a partial run (--subjects/--limit used); "
-              "re-running without them overwrites probe_labels.csv with "
-              "the full set.")
+    if partial:
+        print(f"[note] partial run: results for {subjects} were added to "
+              f"(or replaced in) the existing CSVs; other subjects kept.")
 
 
 if __name__ == "__main__":
