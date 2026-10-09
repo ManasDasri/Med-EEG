@@ -1,19 +1,29 @@
-"""Step 5: does the simple, interpretable biomarker actually compete with a
-black-box model? Leave-one-subject-out cross-validation (never random
-k-fold -- that leaks subject identity between train/test and inflates
-accuracy) comparing:
+"""Step 5: how well do EEG features predict meditation expertise and
+moment-to-moment self-reports -- measured honestly.
 
-  A) Interpretable: 2 features (minimal_ratio, minimal_pac) -> logistic
-     regression / linear regression
-  B) Black box: full 5-band x full-scalp features -> Random Forest
-  C) Black box: same features -> small MLP
+Tasks (--task):
+  expertise       expert vs novice. A trait: one label per PERSON, so the
+                  score is per person (24 cases), not per probe.
+  concentration   self-rated depth of meditation (1-3), per probe
+  mind_wandering  self-rated mind wandering (1-3), per probe
 
-Then a SHAP audit on (B) to check it's actually leaning on theta/gamma power
-and not some artifact.
+Every model is scored with leave-one-subject-out cross-validation (the
+person being tested was never seen in training), and every score comes with
+a permutation p-value: the same pipeline re-run on shuffled labels, which
+shows what score luck alone produces.
+
+Models:
+  interpretable_ratio_pac  minimal_ratio + minimal_pac, linear model
+  linear_spectral          all regional spectral features, L2-regularised
+  boosting_spectral        same features, gradient-boosted trees
+followed by a SHAP audit of boosting_spectral.
+
+Writes model_comparison_<task>.csv, predictions_<task>.csv (out-of-fold
+prediction per probe, best model) and shap_importance_<task>.csv.
 
 Usage:
-    python src/model_comparison.py --bids_root data/ds001787 --task classify
-    python src/model_comparison.py --bids_root data/ds001787 --task regress
+    python src/model_comparison.py --bids_root data/ds001787 --task expertise
+    python src/model_comparison.py --bids_root data/ds001787 --task concentration
 """
 from __future__ import annotations
 
@@ -24,185 +34,212 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import shap
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from joblib import Parallel, delayed
+from sklearn.ensemble import (HistGradientBoostingClassifier,
+                              HistGradientBoostingRegressor)
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.metrics import accuracy_score, r2_score, roc_auc_score
-from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import LeaveOneGroupOut, cross_val_predict
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import Paths  # noqa: E402
+from config import (BOOSTING_PARAMS, LINEAR_C, N_PERMUTATIONS,  # noqa: E402
+                    RANDOM_STATE, RIDGE_ALPHA, Paths)
 
+TASKS = {  # task -> (target column, trait or state)
+    "expertise": ("group_binary", "trait"),
+    "concentration": ("concentration_rating", "state"),
+    "mind_wandering": ("mind_wandering_rating", "state"),
+}
 INTERPRETABLE_FEATURES = ["minimal_ratio", "minimal_pac"]
-BLACKBOX_FEATURES = [
-    "scalp_delta_power", "scalp_theta_power", "scalp_alpha_power",
-    "scalp_beta_power", "scalp_gamma_power",
-]
+MODELS = ["interpretable_ratio_pac", "linear_spectral", "boosting_spectral"]
 
 
-def loso_evaluate(df: pd.DataFrame, feature_cols: list[str], outcome: str,
-                   task: str) -> dict:
-    X = df[feature_cols].to_numpy()
-    y = df[outcome].to_numpy()
-    groups = df["subject"].to_numpy()
-    logo = LeaveOneGroupOut()
-
-    preds, truths = [], []
-    for train_idx, test_idx in logo.split(X, y, groups):
-        scaler = StandardScaler().fit(X[train_idx])
-        X_train, X_test = scaler.transform(X[train_idx]), scaler.transform(X[test_idx])
-        if task == "classify":
-            model = LogisticRegression(max_iter=1000) if len(feature_cols) <= 2 \
-                else RandomForestClassifier(n_estimators=300, random_state=42)
-        else:
-            model = Ridge(alpha=1.0) if len(feature_cols) <= 2 \
-                else RandomForestRegressor(n_estimators=300, random_state=42)
-        model.fit(X_train, y[train_idx])
-        preds.append(model.predict(X_test))
-        truths.append(y[test_idx])
-
-    preds = np.concatenate(preds)
-    truths = np.concatenate(truths)
-    if task == "classify":
-        score = accuracy_score(truths, preds)
-        metric_name = "accuracy"
-    else:
-        score = r2_score(truths, preds)
-        metric_name = "r2"
-    return {"metric": metric_name, "score": score, "n": len(truths)}
+def spectral_columns(df: pd.DataFrame) -> list[str]:
+    """The regional features from extract_features.py. QC columns
+    (n_epochs_*, window_start_s, ...) are deliberately excluded: they track
+    drowsiness and probe timing, which would be a shortcut, not EEG."""
+    return ([c for c in df.columns if c.endswith(("_log", "_rel", "_slope"))]
+            + ["frontal_alpha_asymmetry"])
 
 
-def run_mlp_comparison(df: pd.DataFrame, feature_cols: list[str],
-                        outcome: str, task: str) -> dict:
-    X = df[feature_cols].to_numpy()
-    y = df[outcome].to_numpy()
-    groups = df["subject"].to_numpy()
-    logo = LeaveOneGroupOut()
-    preds, truths = [], []
-    for train_idx, test_idx in logo.split(X, y, groups):
-        scaler = StandardScaler().fit(X[train_idx])
-        X_train, X_test = scaler.transform(X[train_idx]), scaler.transform(X[test_idx])
-        model = (MLPClassifier(hidden_layer_sizes=(16, 8), max_iter=2000,
-                                random_state=42) if task == "classify"
-                 else MLPRegressor(hidden_layer_sizes=(16, 8), max_iter=2000,
-                                    random_state=42))
-        model.fit(X_train, y[train_idx])
-        preds.append(model.predict(X_test))
-        truths.append(y[test_idx])
-    preds, truths = np.concatenate(preds), np.concatenate(truths)
-    if task == "classify":
-        return {"metric": "accuracy", "score": accuracy_score(truths, preds)}
-    return {"metric": "r2", "score": r2_score(truths, preds)}
+def make_model(name: str, kind: str):
+    """Classifiers balance the classes: leaving one person out of 12 vs 12
+    leaves 11 vs 12, and a model with nothing to learn then always predicts
+    the larger class -- i.e. always the held-out person's opposite, scoring
+    ~0% instead of ~50%."""
+    trait = kind == "trait"
+    if name == "boosting_spectral":
+        if trait:
+            return HistGradientBoostingClassifier(
+                **BOOSTING_PARAMS, class_weight="balanced",
+                random_state=RANDOM_STATE)
+        return HistGradientBoostingRegressor(**BOOSTING_PARAMS,
+                                             random_state=RANDOM_STATE)
+    linear = (LogisticRegression(C=LINEAR_C, class_weight="balanced",
+                                 max_iter=2000) if trait
+              else Ridge(alpha=RIDGE_ALPHA))
+    return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
+                         linear)
 
 
-def _extract_positive_class_shap(shap_values) -> np.ndarray:
-    """Different shap versions return classifier SHAP values differently:
-    older versions return a list of (n_samples, n_features) arrays, one per
-    class; newer versions return a single (n_samples, n_features, n_classes)
-    array. Regression models just return a plain (n_samples, n_features)
-    array. Normalize all three to (n_samples, n_features) for the positive
-    class / regression output."""
-    if isinstance(shap_values, list):
-        return shap_values[1] if len(shap_values) > 1 else shap_values[0]
-    if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
-        class_idx = 1 if shap_values.shape[2] > 1 else 0
-        return shap_values[:, :, class_idx]
-    return shap_values
+def prepare(df: pd.DataFrame, task: str) -> pd.DataFrame:
+    """Drop probes without the target. For state tasks, z-score every
+    feature within each recording: people differ ~6x in raw power for
+    reasons unrelated to their state, and this uses only that recording's
+    EEG -- never its labels -- so it is available for a new person too."""
+    target, kind = TASKS[task]
+    if target not in df.columns:
+        raise SystemExit(f"'{target}' missing from features.parquet -- re-run "
+                         f"extract_features.py (group labels come from "
+                         f"participants.tsv)")
+    df = df.dropna(subset=[target]).reset_index(drop=True)
+    if kind == "state":
+        cols = INTERPRETABLE_FEATURES + spectral_columns(df)
+        df[cols] = df.groupby(["subject", "session"])[cols].transform(
+            lambda x: (x - x.mean()) / x.std())
+    return df
 
 
-def shap_audit(df: pd.DataFrame, feature_cols: list[str], outcome: str,
-               task: str, out_dir: Path) -> None:
-    X = df[feature_cols]
-    y = df[outcome]
-    scaler = StandardScaler().fit(X)
-    X_scaled = pd.DataFrame(scaler.transform(X), columns=feature_cols)
+def loso_predictions(df: pd.DataFrame, features: list[str], target: pd.Series,
+                     name: str, kind: str) -> np.ndarray:
+    """Out-of-fold prediction for every probe, each from a model that never
+    saw that probe's subject. Trait: probability of 'expert'. State: a score
+    where higher = higher rating (only its order within a person matters)."""
+    method = "predict_proba" if kind == "trait" else "predict"
+    pred = cross_val_predict(make_model(name, kind), df[features], target,
+                             groups=df["subject"], cv=LeaveOneGroupOut(),
+                             method=method)
+    return pred[:, 1] if kind == "trait" else pred
 
-    model = (RandomForestClassifier(n_estimators=300, random_state=42)
-             if task == "classify"
-             else RandomForestRegressor(n_estimators=300, random_state=42))
-    model.fit(X_scaled, y)
 
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X_scaled)
+def score(df: pd.DataFrame, target: pd.Series, pred: np.ndarray, kind: str
+          ) -> dict:
+    """Trait: average each person's probe predictions, then score the 24
+    people. State: per person, AUC of telling their above-own-average
+    ratings from their below-average ones, averaged over people."""
+    frame = pd.DataFrame({"subject": df["subject"], "y": target, "p": pred})
+    if kind == "trait":
+        per_subject = frame.groupby("subject")[["y", "p"]].mean()
+        return {"metric": "subject_accuracy",
+                "score": float(((per_subject.p > 0.5) == per_subject.y).mean()),
+                "auc": float(roc_auc_score(per_subject.y, per_subject.p))}
+    aucs = []
+    for _, g in frame.groupby("subject"):
+        high = g.y > g.y.mean()
+        if high.nunique() == 2:  # people who always gave the same rating can't be scored
+            aucs.append(roc_auc_score(high, g.p))
+    return {"metric": "within_subject_auc", "score": float(np.mean(aucs)),
+            "n_scored_subjects": len(aucs)}
 
-    mean_abs_shap = np.abs(_extract_positive_class_shap(shap_values)).mean(axis=0)
-    importance = pd.Series(mean_abs_shap, index=feature_cols).sort_values(
-        ascending=False)
-    print("\n=== SHAP feature importance (black-box model) ===")
-    print(importance)
 
-    top_is_freq_band = importance.index[0] in (
-        "scalp_theta_power", "scalp_gamma_power")
-    print(f"[{'OK' if top_is_freq_band else 'CHECK'}] top feature is "
-          f"{'a theta/gamma band' if top_is_freq_band else 'NOT theta or gamma -- '
-           'the black box may be relying on something other than the '
-           'biomarker this project is testing'}: {importance.index[0]}")
+def shuffled_target(df: pd.DataFrame, target: str, kind: str,
+                    rng: np.random.Generator) -> pd.Series:
+    """Labels with the real EEG-label link broken but the structure kept:
+    trait labels are reassigned between PEOPLE; state ratings are shuffled
+    WITHIN each person (keeps each person's rating habits)."""
+    if kind == "trait":
+        labels = df.groupby("subject")[target].first()
+        return df["subject"].map(pd.Series(rng.permutation(labels.to_numpy()),
+                                           index=labels.index))
+    return df.groupby("subject")[target].transform(
+        lambda s: rng.permutation(s.to_numpy()))
 
-    importance.to_csv(out_dir / f"shap_importance_{task}.csv")
+
+def evaluate(df: pd.DataFrame, task: str, name: str, features: list[str],
+             n_permutations: int) -> tuple[dict, np.ndarray]:
+    target, kind = TASKS[task]
+    pred = loso_predictions(df, features, df[target], name, kind)
+    result = score(df, df[target], pred, kind)
+
+    def null_score(seed: int) -> float:
+        y = shuffled_target(df, target, kind, np.random.default_rng(seed))
+        return score(df, y, loso_predictions(df, features, y, name, kind),
+                     kind)["score"]
+
+    null = np.array(Parallel(n_jobs=-1)(
+        delayed(null_score)(RANDOM_STATE + i) for i in range(n_permutations)))
+    result.update({
+        "model": name,
+        "n_features": len(features),
+        "chance": float(null.mean()) if n_permutations else np.nan,
+        "p_value": float((1 + (null >= result["score"]).sum())
+                         / (1 + n_permutations)) if n_permutations else np.nan,
+        "n_subjects": int(df["subject"].nunique()),
+        "n_probes": len(df),
+    })
+    return result, pred
+
+
+def shap_audit(df: pd.DataFrame, features: list[str], task: str,
+               out_dir: Path) -> None:
+    """Which features the boosted model leans on. Muscle markers (temporal
+    gamma, flat slopes) near the top would mean it learned artifact, not
+    brain activity."""
+    target, kind = TASKS[task]
+    model = make_model("boosting_spectral", kind).fit(df[features], df[target])
+    values = shap.TreeExplainer(model).shap_values(df[features])
+    values = values[..., -1] if np.ndim(values) == 3 else values
+    importance = pd.Series(np.abs(values).mean(axis=0), index=features,
+                           name="importance").sort_values(ascending=False)
+    importance.rename_axis("feature").to_csv(out_dir / f"shap_importance_{task}.csv")
+    print("\n=== SHAP: top 10 features (boosting_spectral) ===")
+    print(importance.head(10).round(4).to_string())
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bids_root", required=True, type=Path)
-    parser.add_argument("--task", choices=["classify", "regress"],
-                         default="regress",
-                         help="classify = novice vs expert group; "
-                              "regress = continuous concentration_rating")
+    parser.add_argument("--task", choices=list(TASKS), required=True)
+    parser.add_argument("--features", type=Path, default=None,
+                        help="Feature table to use (default: "
+                             "derivatives/neurodial/features.parquet), e.g. "
+                             "a copy made with extract_features.py --window_s")
+    parser.add_argument("--n_permutations", type=int, default=N_PERMUTATIONS,
+                        help="Shuffled-label repeats for the p-value "
+                             "(0 = skip, much faster)")
     args = parser.parse_args()
 
     paths = Paths.from_root(args.bids_root)
-    feat_path = paths.derivatives / "features.parquet"
+    feat_path = args.features or paths.derivatives / "features.parquet"
     if not feat_path.exists():
-        raise SystemExit(f"{feat_path} not found -- run extract_features.py first.")
-    df = pd.read_parquet(feat_path)
+        raise SystemExit(f"{feat_path} not found -- run extract_features.py")
+    df = prepare(pd.read_parquet(feat_path), args.task)
+    target, kind = TASKS[args.task]
+    feature_sets = {"interpretable_ratio_pac": INTERPRETABLE_FEATURES,
+                    "linear_spectral": spectral_columns(df),
+                    "boosting_spectral": spectral_columns(df)}
+    print(f"[ok] task={args.task}: {len(df)} probes, "
+          f"{df['subject'].nunique()} subjects, "
+          f"{args.n_permutations} permutations per model")
 
-    outcome = "group_binary" if args.task == "classify" else "concentration_rating"
-    if outcome not in df.columns:
-        if outcome == "group_binary":
-            raise SystemExit(
-                "No 'group_binary' column -- merge participants.tsv group "
-                "labels in and encode expert=1/novice=0 before running "
-                "--task classify.")
-        raise SystemExit(
-            "concentration_rating missing -- fill it in during "
-            "preprocess.py first.")
+    results, preds = [], {}
+    for name in MODELS:
+        result, preds[name] = evaluate(df, args.task, name, feature_sets[name],
+                                       args.n_permutations)
+        results.append(result)
+        print(f"  {name:24s} {result['metric']}={result['score']:.3f}  "
+              f"(chance {result['chance']:.3f}, p={result['p_value']:.3f})")
 
-    needed = INTERPRETABLE_FEATURES + BLACKBOX_FEATURES + [outcome, "subject"]
-    df = df.dropna(subset=[c for c in needed if c in df.columns])
-    if df.empty:
-        raise SystemExit("No complete rows after dropping NaNs -- check "
-                          "features.parquet and the rating fill-in step.")
+    summary = pd.DataFrame(results)[
+        ["model", "metric", "score", "chance", "p_value"]
+        + [c for c in ("auc", "n_scored_subjects") if c in results[0]]
+        + ["n_features", "n_subjects", "n_probes"]]
+    summary.to_csv(paths.derivatives / f"model_comparison_{args.task}.csv",
+                   index=False)
+    best = summary.loc[summary["score"].idxmax(), "model"]
+    pd.DataFrame({"subject": df["subject"], "session": df["session"],
+                  "probe_index": df["probe_index"], "target": df[target],
+                  "prediction": preds[best], "model": best}).to_csv(
+        paths.derivatives / f"predictions_{args.task}.csv", index=False)
 
-    print(f"[ok] {len(df)} rows, {df['subject'].nunique()} subjects, "
-          f"task={args.task}")
-
-    interpretable = loso_evaluate(df, INTERPRETABLE_FEATURES, outcome, args.task)
-    blackbox_rf = loso_evaluate(df, BLACKBOX_FEATURES, outcome, args.task)
-    blackbox_mlp = run_mlp_comparison(df, BLACKBOX_FEATURES, outcome, args.task)
-
-    print("\n=== LOSO-CV shootout ===")
-    print(f"Interpretable (ratio+PAC, 2 features): "
-          f"{interpretable['metric']}={interpretable['score']:.3f}")
-    print(f"Black box (Random Forest, 5-band scalp features): "
-          f"{blackbox_rf['metric']}={blackbox_rf['score']:.3f}")
-    print(f"Black box (MLP, 5-band scalp features): "
-          f"{blackbox_mlp['metric']}={blackbox_mlp['score']:.3f}")
-    gap = blackbox_rf["score"] - interpretable["score"]
-    print(f"\nGap (RF - interpretable): {gap:.3f} "
-          f"-- this gap is the headline number for the project's novelty "
-          f"claim, small is a win for the interpretable-biomarker hypothesis.")
-
-    shap_audit(df, BLACKBOX_FEATURES, outcome, args.task, paths.derivatives)
-
-    summary = pd.DataFrame([
-        {"model": "interpretable_ratio_pac", **interpretable},
-        {"model": "random_forest_5band", **blackbox_rf},
-        {"model": "mlp_5band", **blackbox_mlp},
-    ])
-    out_path = paths.derivatives / f"model_comparison_{args.task}.csv"
-    summary.to_csv(out_path, index=False)
-    print(f"\n[ok] wrote {out_path}")
+    shap_audit(df, feature_sets["boosting_spectral"], args.task,
+               paths.derivatives)
+    print(f"\n[ok] wrote model_comparison_{args.task}.csv, "
+          f"predictions_{args.task}.csv, shap_importance_{args.task}.csv "
+          f"to {paths.derivatives}")
 
 
 if __name__ == "__main__":

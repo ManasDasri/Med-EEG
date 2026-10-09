@@ -187,6 +187,25 @@ GROUP_MAP_HINT = (
     "not in the events. Check participants.tsv columns after downloading."
 )
 
+# --- Modelling (model_comparison.py) --------------------------------------------
+# Hyperparameters are FIXED, not tuned on the results: with 24 people, picking
+# whichever setting scores best on the test folds would inflate the score.
+# All are deliberately conservative (strong regularisation, shallow trees),
+# since there are ~1000 probes but only 24 independent people.
+RANDOM_STATE = 42
+LINEAR_C = 0.1        # LogisticRegression; smaller = stronger regularisation
+RIDGE_ALPHA = 10.0    # Ridge; larger = stronger regularisation
+BOOSTING_PARAMS = {
+    "max_depth": 3,
+    "learning_rate": 0.05,
+    "max_iter": 200,
+    "min_samples_leaf": 20,
+    "l2_regularization": 1.0,
+}
+# Shuffled-label repeats per model for the p-value. 100 resolves p down to
+# ~0.01; raise to 1000 for a final, publishable p-value.
+N_PERMUTATIONS = 100
+
 
 @dataclass
 class Paths:

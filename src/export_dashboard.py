@@ -150,35 +150,25 @@ def main() -> None:
         print("[warn] no participants.tsv found -- group/age/gender and "
               "the group-comparison panel will be empty in the dashboard.")
 
-    # model_comparison.py now writes task-specific filenames
-    # (model_comparison_regress.csv / model_comparison_classify.csv) so a
-    # --task regress run and a --task classify run don't overwrite each
-    # other. Prefer the regress variant for the dashboard's headline
-    # numbers (concentration prediction is this project's core question),
-    # falling back to the old undifferentiated filename for compatibility
-    # with earlier runs.
+    # model_comparison.py writes one file per task. The dashboard headlines
+    # the first task found, in this order (concentration is the project's
+    # core question).
+    tasks = ["concentration", "expertise", "mind_wandering"]
+    task = next((t for t in tasks if (paths.derivatives /
+                 f"model_comparison_{t}.csv").exists()), None)
     model_comparison = safe_read_csv(
-        paths.derivatives / "model_comparison_regress.csv")
-    if model_comparison is None:
-        model_comparison = safe_read_csv(
-            paths.derivatives / "model_comparison_classify.csv")
-    if model_comparison is None:
-        model_comparison = safe_read_csv(
-            paths.derivatives / "model_comparison.csv")
+        paths.derivatives / f"model_comparison_{task}.csv") if task else None
     electrode_curve = safe_read_csv(
         paths.derivatives / "electrode_minimalism_curve.csv")
-    shap_path = paths.derivatives / "shap_importance_regress.csv"
-    if not shap_path.exists():
-        shap_path = paths.derivatives / "shap_importance_classify.csv"
-    if not shap_path.exists():
-        shap_path = paths.derivatives / "shap_importance.csv"
+    shap_path = paths.derivatives / f"shap_importance_{task}.csv"
     shap_df = None
-    if shap_path.exists():
+    if task and shap_path.exists():
         shap_df = pd.read_csv(shap_path)
         shap_df.columns = ["feature", "importance"]
 
     payload = {
         "generated_at": pd.Timestamp.now().isoformat(),
+        "model_task": task,
         "n_subjects": int(features["subject"].nunique()),
         "n_probes": int(len(features)),
         "subjects": build_subjects_payload(features, participants),
