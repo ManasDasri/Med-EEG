@@ -10,8 +10,9 @@ as exploratory ("follow-up analyses suggested..."), not as confirmed.
      each rating differ from person to person? (Per-person estimates are
      written to individual_ratio_effects.csv.)
   D) Expertise -- does the ratio's link with each rating differ between
-     experts and novices? Caution: in this dataset group is nearly the same
-     split as sex (experts 9/11 male, novices 10/12 female).
+     experts and novices? Random slopes per person, and adjusted for sex,
+     because in this dataset group is nearly the same split as sex
+     (experts 9/11 male, novices 10/12 female).
 
 Writes lme_followup_results.csv (one row per term) and
 individual_ratio_effects.csv.
@@ -93,13 +94,20 @@ def main() -> None:
                             + result.fe_params["minimal_ratio"])}))
         tables.append(tidy)
 
-    # D) expertise moderation
+    # D) expertise moderation. Group is a between-person variable, so the
+    # ratio slope gets a random effect per person (otherwise every probe
+    # counts as independent evidence and p-values come out far too small),
+    # and sex x ratio is in the model because group ~ sex in this dataset.
+    has_sex = "gender" in features.columns
     for outcome in RATINGS:
         df = standardise(features.dropna(subset=["group"]), outcome,
                          ["minimal_ratio"])
-        _, tidy = fit_lme(df, f"{outcome} ~ minimal_ratio * group + {TIME}",
-                          "D_expertise")
-        report(f"D) Expertise x ratio -> {outcome} (group ~ sex here!)", tidy)
+        sex_term = " + minimal_ratio * gender" if has_sex else ""
+        _, tidy = fit_lme(df, f"{outcome} ~ minimal_ratio * group{sex_term} "
+                              f"+ {TIME}", "D_expertise",
+                          re_formula="~minimal_ratio")
+        report(f"D) Expertise x ratio -> {outcome} (random slopes"
+               f"{', sex-adjusted' if has_sex else ''})", tidy)
         tables.append(tidy)
 
     out = pd.concat(tables, ignore_index=True)

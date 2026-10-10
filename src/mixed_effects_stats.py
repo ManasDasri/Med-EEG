@@ -37,9 +37,12 @@ RATINGS = ["concentration_rating", "mind_wandering_rating"]
 def standardise(df: pd.DataFrame, outcome: str, predictors: list[str]
                 ) -> pd.DataFrame:
     """Rows with the outcome and all predictors present; predictors and
-    time-on-task z-scored within each recording."""
+    time-on-task z-scored within each recording. Recordings with too few
+    probes (or no variation) to z-score are dropped -- e.g. tiredness was
+    answered only once in some recordings."""
     df = df.dropna(subset=[outcome, *predictors]).reset_index(drop=True)
-    return zscore_within_recording(df, [*predictors, TIME])
+    df = zscore_within_recording(df, [*predictors, TIME])
+    return df.dropna(subset=[*predictors, TIME]).reset_index(drop=True)
 
 
 def fit_lme(df: pd.DataFrame, formula: str, analysis: str,
