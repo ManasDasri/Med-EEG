@@ -1,9 +1,17 @@
-"""Step 4: within-subject statistics.
+"""Step 4: within-person mixed-effects models -- the project's core
+statistical test.
 
-Group-level (expert vs novice) contrasts are confounded by trait
-differences between the two groups. The stronger, less confounded test is
-whether gamma/theta ratio and PAC predict a person's OWN moment-to-moment
-concentration rating, treating subject as a random effect.
+Does a person's OWN gamma/theta ratio (and PAC) track their OWN
+moment-to-moment ratings? Two safeguards:
+  - predictors are z-scored within each recording, so a coefficient means
+    "rating change per 1 SD change within a session", and between-person
+    differences in raw power (~6x) can't pose as an effect
+  - time-on-task (probe onset, also z-scored within recording) is a
+    covariate: ratings drift over a session, and anything else that drifts
+    would otherwise look like an effect
+Random intercept per subject (each person's own average rating).
+
+Writes lme_results.csv: one row per term, with 95% CI and p-value.
 
 Usage:
     python src/mixed_effects_stats.py --bids_root data/ds001787
@@ -19,52 +27,41 @@ import statsmodels.formula.api as smf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import Paths  # noqa: E402
+from model_comparison import zscore_within_recording  # noqa: E402
+
+CORE_PREDICTORS = ["minimal_ratio", "minimal_pac"]
+TIME = "probe_onset_s"
+RATINGS = ["concentration_rating", "mind_wandering_rating"]
 
 
-def fit_lme(df: pd.DataFrame, outcome: str, predictors: list[str]
-            ) -> None:
-    formula = f"{outcome} ~ " + " + ".join(predictors)
-    model = smf.mixedlm(formula, df, groups=df["subject"])
-    result = model.fit(reml=True)
-    print(f"\n=== LME: {formula}  (random intercept by subject) ===")
-    print(result.summary())
+def standardise(df: pd.DataFrame, outcome: str, predictors: list[str]
+                ) -> pd.DataFrame:
+    """Rows with the outcome and all predictors present; predictors and
+    time-on-task z-scored within each recording."""
+    df = df.dropna(subset=[outcome, *predictors]).reset_index(drop=True)
+    return zscore_within_recording(df, [*predictors, TIME])
 
 
-def group_contrast(df: pd.DataFrame, feature: str, group_col: str = "group"
-                    ) -> None:
-    if group_col not in df.columns:
-        print(f"[skip] no '{group_col}' column -- merge participants.tsv "
-              f"group labels into features.parquet first (see "
-              f"inspect_dataset.py participants.tsv inspection).")
-        return
-    means = df.groupby(group_col)[feature].mean()
-    print(f"\n{feature} by group:\n{means}")
-
-
-def electrode_minimalism_curve(df: pd.DataFrame, outcome: str) -> pd.DataFrame:
-    """Compare how much variance in the outcome each electrode-set's ratio
-    explains, as a quick proxy for the fuller LOSO-CV comparison in
-    model_comparison.py."""
-    results = []
-    for cluster in ["minimal", "frontal_theta", "posterior_gamma"]:
-        col = f"{cluster}_ratio"
-        if col not in df.columns:
-            continue
-        sub = df[[col, outcome, "subject"]].dropna()
-        if len(sub) < 10:
-            continue
-        formula = f"{outcome} ~ {col}"
-        model = smf.mixedlm(formula, sub, groups=sub["subject"])
-        result = model.fit(reml=True)
-        results.append({
-            "electrode_set": cluster,
-            "n_electrodes": {"minimal": 2, "frontal_theta": 3,
-                              "posterior_gamma": 3}.get(cluster),
-            "coef": result.params.get(col, float("nan")),
-            "pvalue": result.pvalues.get(col, float("nan")),
-            "n_obs": len(sub),
-        })
-    return pd.DataFrame(results)
+def fit_lme(df: pd.DataFrame, formula: str, analysis: str,
+            re_formula: str | None = None):
+    """Fit a random-intercept (optionally random-slope) model per subject.
+    Returns (statsmodels result, tidy table of the fixed effects)."""
+    result = smf.mixedlm(formula, df, groups=df["subject"],
+                         re_formula=re_formula).fit(reml=True, method="lbfgs")
+    ci = result.conf_int()
+    terms = [t for t in result.fe_params.index if t != "Intercept"]
+    tidy = pd.DataFrame({
+        "analysis": analysis,
+        "outcome": formula.split("~")[0].strip(),
+        "term": terms,
+        "coef": result.fe_params[terms].to_numpy(),
+        "ci_low": ci.loc[terms, 0].to_numpy(),
+        "ci_high": ci.loc[terms, 1].to_numpy(),
+        "p_value": result.pvalues[terms].to_numpy(),
+        "n_obs": int(result.nobs),
+        "n_subjects": df["subject"].nunique(),
+    })
+    return result, tidy
 
 
 def main() -> None:
@@ -76,29 +73,25 @@ def main() -> None:
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
         raise SystemExit(f"{feat_path} not found -- run extract_features.py first.")
-    df = pd.read_parquet(feat_path)
+    features = pd.read_parquet(feat_path)
 
-    if df["concentration_rating"].isna().all():
-        raise SystemExit(
-            "concentration_rating is entirely NaN -- go back to "
-            "preprocess.py and fill in the actual rating values from "
-            "events.tsv before running any stats.")
+    tables = []
+    for outcome in RATINGS:
+        df = standardise(features, outcome, CORE_PREDICTORS)
+        formula = f"{outcome} ~ " + " + ".join([*CORE_PREDICTORS, TIME])
+        _, tidy = fit_lme(df, formula, "core")
+        tables.append(tidy)
+        print(f"\n=== {formula}  (random intercept per subject) ===")
+        print(tidy[["term", "coef", "ci_low", "ci_high", "p_value"]]
+              .round(4).to_string(index=False))
+        print(f"    {tidy['n_obs'].iloc[0]} probes, "
+              f"{tidy['n_subjects'].iloc[0]} subjects. Coefficients: rating "
+              f"change per 1 SD within-session change.")
 
-    # minimal_pac is NaN for probes with too little signal (extract_features.py)
-    df = df.dropna(subset=["concentration_rating", "minimal_ratio",
-                           "minimal_pac"])
-
-    fit_lme(df, "concentration_rating",
-            ["minimal_ratio", "minimal_pac"])
-
-    group_contrast(df, "frontal_theta_ratio")
-
-    curve = electrode_minimalism_curve(df, "concentration_rating")
-    print("\n=== electrode-minimalism curve (ratio -> concentration) ===")
-    print(curve)
-    out_path = paths.derivatives / "electrode_minimalism_curve.csv"
-    curve.to_csv(out_path, index=False)
-    print(f"[ok] wrote {out_path}")
+    out = pd.concat(tables, ignore_index=True)
+    out_path = paths.derivatives / "lme_results.csv"
+    out.to_csv(out_path, index=False)
+    print(f"\n[ok] wrote {out_path}")
 
 
 if __name__ == "__main__":

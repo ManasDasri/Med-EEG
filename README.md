@@ -40,9 +40,9 @@ group label — that's what this project exploits.
 | # | Idea | Why it matters |
 |---|------|----------------|
 | 1 | **Phase-amplitude coupling** (Tort Modulation Index) alongside power ratio | Tests whether gamma is *locked* to theta phase, not just co-occurring |
-| 2 | **Electrode minimalism** | Finds the smallest electrode set that keeps ~90% of full-scalp decoding accuracy |
-| 3 | **Interpretable vs. black-box shootout** | 2-feature linear model vs. Random Forest / MLP on the full spectrum, same LOSO-CV |
-| 4 | **Linear mixed-effects models** | Subject as random effect — tests the within-person relationship, not the confounded expert/novice split |
+| 2 | **Electrode minimalism** | Best 1, 2, 4 … 64 electrodes (chosen on training people only) vs full scalp, plus predefined clusters |
+| 3 | **Interpretable vs. black-box shootout** | 2-feature linear model vs. linear and gradient-boosting models on 67 regional spectral features, with permutation tests and non-EEG baselines |
+| 4 | **Linear mixed-effects models** | Predictors normalised within each recording, time-on-task as covariate, subject as random effect |
 | 5 | **SHAP audit** | Checks what the black box actually relies on (theta/gamma, or artifacts like delta) |
 | 6 | **NeuroDial dashboard** | Interactive, serverless replay of results as a neurofeedback-style dial |
 
@@ -80,7 +80,8 @@ src/
   inspect_dataset.py      sanity-check the BIDS layout, subjects, probe events
   preprocess.py           filter, re-reference, ICA, epoch before each probe
   extract_features.py     spectral features per region/cluster + PAC, per probe and per epoch
-  mixed_effects_stats.py  mixed-effects models + electrode-minimalism curve
+  mixed_effects_stats.py  core within-person mixed-effects models (ratio, PAC, time)
+  electrode_minimalism.py how few electrodes keep the signal (nested selection)
   model_comparison.py     LOSO models + permutation tests + non-EEG baselines + SHAP
   export_dashboard.py     bundle results into dashboard_data.json
   followup_analysis.py    follow-ups: delta power, tiredness, random slopes, expertise
@@ -88,6 +89,7 @@ tests/
   test_preprocess.py      probe/answer decoding checks (python tests/test_preprocess.py)
   test_features.py        feature checks on synthetic signals (python tests/test_features.py)
   test_models.py          signal vs no-signal model checks (python tests/test_models.py)
+  test_electrode_minimalism.py  nested electrode selection checks
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          original single-file KNN prototype
@@ -114,6 +116,7 @@ python src/inspect_dataset.py      --bids_root data/ds001787
 python src/preprocess.py           --bids_root data/ds001787   # --subjects / --limit for a quick run
 python src/extract_features.py     --bids_root data/ds001787   # --window_s 30 to use only the last 30 s
 python src/mixed_effects_stats.py  --bids_root data/ds001787
+python src/electrode_minimalism.py --bids_root data/ds001787 --task mind_wandering   # or concentration
 python src/model_comparison.py     --bids_root data/ds001787 --task expertise  # or concentration, mind_wandering
 python src/export_dashboard.py     --bids_root data/ds001787
 python src/followup_analysis.py    --bids_root data/ds001787   # optional
@@ -139,7 +142,7 @@ results, leaving 23 people and 929 probes.
 |---|---|---|---|
 | Expert vs novice | 78.3% of people (18/23), p = 0.012 | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
 | Concentration, moment to moment | within-person AUC 0.54 (n.s.) | time-on-task: 0.56 | No signal |
-| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), p = 0.004 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; possibly muscle (temple-electrode gamma predicts it equally) |
+| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), p = 0.004; **one electrode (AF8) alone: 0.63** | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the signal sits at the right forehead above the eye, so likely muscle or eye-movement artifact rather than brain |
 
 With 24 people, a model with **no signal** reaches ≥ 70% accuracy about 8% of
 the time, so a bare accuracy figure without a chance level means little. Full
