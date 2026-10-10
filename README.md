@@ -82,6 +82,7 @@ src/
   extract_features.py     spectral features per region/cluster + PAC, per probe and per epoch
   mixed_effects_stats.py  core within-person mixed-effects models (ratio, PAC, time)
   electrode_minimalism.py how few electrodes keep the signal (nested selection)
+  robustness_checks.py    session-split, leave-one-out and muscle checks of the leads
   model_comparison.py     LOSO models + permutation tests + non-EEG baselines + SHAP
   export_dashboard.py     bundle results into dashboard_data.json
   followup_analysis.py    follow-ups: delta power, tiredness, random slopes, expertise
@@ -90,6 +91,7 @@ tests/
   test_features.py        feature checks on synthetic signals (python tests/test_features.py)
   test_models.py          signal vs no-signal model checks (python tests/test_models.py)
   test_electrode_minimalism.py  nested electrode selection checks
+  test_robustness_checks.py     cross-session electrode transfer checks
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          original single-file KNN prototype
@@ -117,6 +119,7 @@ python src/preprocess.py           --bids_root data/ds001787   # --subjects / --
 python src/extract_features.py     --bids_root data/ds001787   # --window_s 30 to use only the last 30 s
 python src/mixed_effects_stats.py  --bids_root data/ds001787
 python src/electrode_minimalism.py --bids_root data/ds001787 --task mind_wandering   # or concentration
+python src/robustness_checks.py    --bids_root data/ds001787
 python src/model_comparison.py     --bids_root data/ds001787 --task expertise  # or concentration, mind_wandering
 python src/export_dashboard.py     --bids_root data/ds001787
 python src/followup_analysis.py    --bids_root data/ds001787   # optional
@@ -142,7 +145,7 @@ results, leaving 23 people and 929 probes.
 |---|---|---|---|
 | Expert vs novice | 78.3% of people (18/23), p = 0.012 | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
 | Concentration, moment to moment | within-person AUC 0.54 (n.s.) | time-on-task: 0.56 | No signal |
-| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), p = 0.004; **one electrode (AF8) alone: 0.63** | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the signal sits at the right forehead above the eye, so likely muscle or eye-movement artifact rather than brain |
+| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), p = 0.004; one electrode (AF8) alone: 0.63 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the single-electrode result does not replicate across sessions |
 
 With 24 people, a model with **no signal** reaches ≥ 70% accuracy about 8% of
 the time, so a bare accuracy figure without a chance level means little. Full
@@ -156,6 +159,14 @@ slopes and sex: **in experts a higher gamma/theta ratio goes with lower
 concentration, in novices it doesn't** (interaction p = 0.0004). Electrode
 minimalism: for mind wandering one electrode (AF8, chosen on training people
 only) matches the full scalp.
+
+Robustness (phase 5, `robustness_checks.py`): the expertise × ratio effect
+**replicates separately in first sessions (p = 0.013) and later sessions
+(p = 0.005)**, survives dropping any single person (weakest p = 0.012), is
+carried by gamma power, and survives controlling for temple-electrode gamma, a
+muscle marker (p = 0.003). The one-electrode mind-wandering detector does
+**not** replicate across sessions (p ≈ 0.08–0.09, and a different electrode is
+chosen each way).
 
 ## Limitations
 
