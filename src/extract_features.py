@@ -34,10 +34,12 @@ from joblib import Parallel, delayed
 from scipy.signal import hilbert
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import (ALL_BANDS, ASYMMETRY_PAIR, BANDPASS_HIGH_HZ, GAMMA_BAND,
-                    PAC_CLUSTERS, PAC_EDGE_S, PAC_MIN_SECONDS, PAC_N_BINS,
-                    PAC_N_SURROGATES, PAC_RANDOM_STATE, REGIONS,
-                    SLOPE_RANGE_HZ, THETA_BAND, Paths)  # noqa: E402
+from config import (ALL_BANDS, ASYMMETRY_PAIR, BANDPASS_HIGH_HZ,
+                    BIOSEMI64_TO_1020, GAMMA_BAND, MAX_BAD_CHANNEL_FRACTION,
+                    MAX_EPOCH_REJECT_RATE, PAC_CLUSTERS, PAC_EDGE_S,
+                    PAC_MIN_SECONDS, PAC_N_BINS, PAC_N_SURROGATES,
+                    PAC_RANDOM_STATE, REGIONS, SLOPE_RANGE_HZ, THETA_BAND,
+                    Paths)  # noqa: E402
 
 mne.set_log_level("WARNING")
 
@@ -221,19 +223,22 @@ def probe_features(row: dict, window_s: float | None
 
 
 def add_group_labels(df: pd.DataFrame, bids_root: Path) -> pd.DataFrame:
-    """Merge expert/novice from participants.tsv; expert -> 1, novice -> 0
-    as group_binary for model_comparison.py --task classify."""
+    """Merge expert/novice (plus age and gender) from participants.tsv;
+    expert -> 1, novice -> 0 as group_binary for model_comparison.py."""
     participants_path = bids_root / "participants.tsv"
     if not participants_path.exists():
         print("[warn] no participants.tsv found at bids_root -- "
-              "group_binary not created, --task classify won't work.")
+              "group_binary not created, --task expertise won't work.")
         return df
     participants = pd.read_csv(participants_path, sep="\t")
     if "group" not in participants.columns:
         print("[warn] participants.tsv has no 'group' column -- "
-              "group_binary not created, --task classify won't work.")
+              "group_binary not created, --task expertise won't work.")
         return df
-    df = df.merge(participants[["participant_id", "group"]],
+    # age and gender come along so model_comparison.py can check that EEG
+    # beats them: in this dataset experts are 9/11 male, novices 10/12 female.
+    extra = [c for c in ("age", "gender") if c in participants.columns]
+    df = df.merge(participants[["participant_id", "group", *extra]],
                   left_on="subject", right_on="participant_id", how="left")
     df = df.drop(columns=["participant_id"])
     # Anything other than expert/novice (typos, missing) -> NaN so it's
@@ -245,6 +250,26 @@ def add_group_labels(df: pd.DataFrame, bids_root: Path) -> pd.DataFrame:
         print(f"[warn] {n_unmapped} rows have a 'group' value that didn't "
               f"map to expert/novice -- check participants.tsv.")
     return df
+
+
+def exclude_poor_recordings(manifest: pd.DataFrame, qc_path: Path
+                            ) -> pd.DataFrame:
+    """Drop probes from recordings that failed the quality limits in
+    config.py (too many bad channels or rejected epochs)."""
+    if not qc_path.exists():
+        print(f"[warn] {qc_path.name} not found -- no quality exclusion")
+        return manifest
+    qc = pd.read_csv(qc_path)
+    n_eeg = len(BIOSEMI64_TO_1020)  # 64 scalp channels
+    poor = qc[(qc["n_bad_channels"] / n_eeg > MAX_BAD_CHANNEL_FRACTION)
+              | (qc["epoch_reject_rate"] > MAX_EPOCH_REJECT_RATE)]
+    for r in poor.itertuples():
+        print(f"[excluded] {r.subject} / {r.session}: {r.n_bad_channels} bad "
+              f"channels, {r.epoch_reject_rate:.0%} epochs rejected")
+    bad = set(zip(poor["subject"], poor["session"]))
+    keep = [(s, ses) not in bad
+            for s, ses in zip(manifest["subject"], manifest["session"])]
+    return manifest[keep]
 
 
 def main() -> None:
@@ -264,7 +289,8 @@ def main() -> None:
     if not manifest_path.exists():
         raise SystemExit(f"{manifest_path} not found -- run preprocess.py "
                          f"first.")
-    manifest = pd.read_csv(manifest_path)
+    manifest = exclude_poor_recordings(pd.read_csv(manifest_path),
+                                       paths.derivatives / "preprocessing_qc.csv")
     rows = [r for r in manifest.to_dict("records")
             if Path(r["epochs_file"]).exists()]
     if len(rows) < len(manifest):

@@ -89,6 +89,16 @@ REGIONS = {
 # Frontal alpha asymmetry = log alpha(right) - log alpha(left).
 ASYMMETRY_PAIR = ("F4", "F3")
 
+# --- Recording exclusion (applied in extract_features.py) --------------------------
+# Decided BEFORE looking at any model results, so it can't be tuned to make
+# scores look better. A recording is left out if either limit is exceeded:
+# interpolating a quarter of the scalp makes the data smoother than reality,
+# and losing half the epochs leaves too little clean signal. sub-010 (31% and
+# 27% of channels bad: poor electrode contact, 65% of power below 4 Hz on the
+# flagged channels) is the case that prompted this.
+MAX_BAD_CHANNEL_FRACTION = 0.25
+MAX_EPOCH_REJECT_RATE = 0.5
+
 # --- Feature extraction ----------------------------------------------------------
 # Aperiodic (1/f) slope is fit in log-log space over this range. 30-45 Hz sits
 # above the alpha/beta peaks, where the spectrum is mostly the 1/f background.
@@ -186,6 +196,25 @@ GROUP_MAP_HINT = (
     "Group (experienced vs novice) typically lives in participants.tsv, "
     "not in the events. Check participants.tsv columns after downloading."
 )
+
+# --- Modelling (model_comparison.py) --------------------------------------------
+# Hyperparameters are FIXED, not tuned on the results: with 24 people, picking
+# whichever setting scores best on the test folds would inflate the score.
+# All are deliberately conservative (strong regularisation, shallow trees),
+# since there are ~1000 probes but only 24 independent people.
+RANDOM_STATE = 42
+LINEAR_C = 0.1        # LogisticRegression; smaller = stronger regularisation
+RIDGE_ALPHA = 10.0    # Ridge; larger = stronger regularisation
+BOOSTING_PARAMS = {
+    "max_depth": 3,
+    "learning_rate": 0.05,
+    "max_iter": 200,
+    "min_samples_leaf": 20,
+    "l2_regularization": 1.0,
+}
+# Shuffled-label repeats per model for the p-value. 100 resolves p down to
+# ~0.01; raise to 1000 for a final, publishable p-value.
+N_PERMUTATIONS = 100
 
 
 @dataclass

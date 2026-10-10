@@ -69,8 +69,8 @@ function ratioToColor(r){
 }
 const NICE_MODEL_NAMES = {
   interpretable_ratio_pac: 'Interpretable (ratio + PAC)',
-  random_forest_5band: 'Random forest (5-band scalp)',
-  mlp_5band: 'MLP (5-band scalp)',
+  linear_spectral: 'Linear (all spectral features)',
+  boosting_spectral: 'Gradient boosting (all spectral features)',
 };
 
 /* ============================= count-up hook ============================= */
@@ -357,8 +357,8 @@ function App(){
     if(!data) return null;
     const mc = data.model_comparison || [];
     const interp = mc.find(m=>m.model==='interpretable_ratio_pac');
-    const rf = mc.find(m=>m.model==='random_forest_5band');
-    return (interp && rf) ? rf.score - interp.score : null;
+    const best = mc.find(m=>m.model==='boosting_spectral');
+    return (interp && best) ? best.score - interp.score : null;
   }, [data]);
 
   const currentSubject = useMemo(() => (data?.subjects||[]).find(s=>s.subject===subject), [data, subject]);
@@ -480,7 +480,7 @@ function App(){
         {tab==='models' && (
           <section className="panel">
             <h2>Interpretable vs black-box shootout</h2>
-            <p className="desc">Leave-one-subject-out cross-validated score: the 2-feature ratio+PAC model against Random Forest and MLP trained on full-scalp 5-band power. A small gap supports the project's core hypothesis.</p>
+            <p className="desc">Leave-one-subject-out score{data?.model_task ? ` for ${data.model_task}` : ''}: the 2-feature ratio+PAC model against linear and gradient-boosting models on all regional spectral features. Each model's chance level and p-value come from shuffled-label runs in model_comparison_*.csv. A small gap supports the project's core hypothesis.</p>
             <div className="card">
               <BarChart horizontal items={(data?.model_comparison||[]).map((m,i)=>({label:NICE_MODEL_NAMES[m.model]||m.model, value:m.score, cls:i===0?'bar-theta':'bar-neutral'}))} />
             </div>

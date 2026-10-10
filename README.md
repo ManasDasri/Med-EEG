@@ -3,7 +3,7 @@
 **Interpretable gamma/theta EEG biomarkers for meditation depth**
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![MNE](https://img.shields.io/badge/MNE--Python-1.6%2B-1f77b4)](https://mne.tools/)
+[![MNE](https://img.shields.io/badge/MNE--Python-1.7%2B-1f77b4)](https://mne.tools/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![statsmodels](https://img.shields.io/badge/statsmodels-LME-4B8BBE)](https://www.statsmodels.org/)
 [![SHAP](https://img.shields.io/badge/explainability-SHAP-ff0051)](https://github.com/shap/shap)
@@ -81,12 +81,13 @@ src/
   preprocess.py           filter, re-reference, ICA, epoch before each probe
   extract_features.py     spectral features per region/cluster + PAC, per probe and per epoch
   mixed_effects_stats.py  mixed-effects models + electrode-minimalism curve
-  model_comparison.py     LOSO-CV model shootout + SHAP audit
+  model_comparison.py     LOSO models + permutation tests + non-EEG baselines + SHAP
   export_dashboard.py     bundle results into dashboard_data.json
   followup_analysis.py    follow-ups: delta power, tiredness, random slopes, expertise
 tests/
   test_preprocess.py      probe/answer decoding checks (python tests/test_preprocess.py)
   test_features.py        feature checks on synthetic signals (python tests/test_features.py)
+  test_models.py          signal vs no-signal model checks (python tests/test_models.py)
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          original single-file KNN prototype
@@ -113,7 +114,7 @@ python src/inspect_dataset.py      --bids_root data/ds001787
 python src/preprocess.py           --bids_root data/ds001787   # --subjects / --limit for a quick run
 python src/extract_features.py     --bids_root data/ds001787   # --window_s 30 to use only the last 30 s
 python src/mixed_effects_stats.py  --bids_root data/ds001787
-python src/model_comparison.py     --bids_root data/ds001787 --task classify   # or --task regress
+python src/model_comparison.py     --bids_root data/ds001787 --task expertise  # or concentration, mind_wandering
 python src/export_dashboard.py     --bids_root data/ds001787
 python src/followup_analysis.py    --bids_root data/ds001787   # optional
 ```
@@ -127,26 +128,31 @@ for every recording.
 Open `dashboard.html` in a browser and load `dashboard_data.json` (or
 `dashboard_data.sample.json` to try it without the dataset). No server needed.
 
-## What success looks like
+## Results (all 24 subjects)
 
-- **LME:** ratio and/or PAC significantly predict trial-level concentration,
-  controlling for subject — reported with effect sizes, not just p-values.
-- **ML:** the 2-feature interpretable model lands within ~5–10% of the
-  black-box models under leave-one-subject-out CV.
-- **Electrode minimalism:** a 2–4 electrode subset recovers most of full-scalp
-  performance.
+Leave-one-subject-out throughout; every score is compared with shuffled-label
+runs (chance level, p-value) **and with non-EEG baselines**. One subject
+(sub-010, poor electrode contact) is excluded by a rule set before any
+results, leaving 23 people and 929 probes.
 
-All evaluation uses **leave-one-subject-out** CV — random k-fold leaks subject
-identity and inflates accuracy.
+| Question | Best EEG result | Non-EEG baseline | Verdict |
+|---|---|---|---|
+| Expert vs novice | 78.3% of people (18/23), p = 0.012 | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
+| Concentration, moment to moment | within-person AUC 0.54 (n.s.) | time-on-task: 0.56 | No signal |
+| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), p = 0.004 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; possibly muscle (temple-electrode gamma predicts it equally) |
+
+With 24 people, a model with **no signal** reaches ≥ 70% accuracy about 8% of
+the time, so a bare accuracy figure without a chance level means little. Full
+analysis: the phase 3 breakdown, and `model_comparison_<task>.csv` in the
+derivatives folder.
 
 ## Limitations
 
-- 24 subjects is small for a 64-channel feature space; hence the emphasis on
-  simple models and few electrodes.
-- Self-report probes are subjective and retrospective — noisy labels, not gold
-  standard.
-- Expertise is confounded with age and other traits; the within-subject LME is
-  the stronger claim, not the group contrast.
+- **Expertise is confounded with sex** (and partly age) in this dataset; only
+  a sex-balanced sample can answer the expertise question.
+- Self-report probes are subjective and arrive every ~90 s, so the labels are noisy.
+- Scalp gamma (30–45 Hz) can't be fully separated from muscle activity.
+- 23 usable people is small; treat every result as hypothesis-generating.
 
 ## Citation
 
