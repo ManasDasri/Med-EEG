@@ -45,8 +45,10 @@ from config import (ALL_BANDS, ASYMMETRY_PAIR, BANDPASS_HIGH_HZ,
 mne.set_log_level("WARNING")
 
 TOTAL_BAND = (min(lo for lo, _ in ALL_BANDS.values()), BANDPASS_HIGH_HZ)
+# Copied onto every epoch row when present (ds001787 ratings, ds008836 depth).
 LABEL_COLUMNS = ["subject", "session", "probe_index", "concentration_rating",
-                 "mind_wandering_rating", "tiredness_rating"]
+                 "mind_wandering_rating", "tiredness_rating", "depth_rating",
+                 "block", "block_type", "variant"]
 
 
 # --- Spectral features ------------------------------------------------------------
@@ -223,7 +225,7 @@ def probe_features(row: dict, window_s: float | None
     epoch_table = pd.DataFrame(spectral_features(psd, freqs, epochs.ch_names))
     epoch_table.insert(0, "seconds_before_probe",
                        epochs.metadata["seconds_before_probe"].to_numpy())
-    for col in reversed(LABEL_COLUMNS):
+    for col in reversed([c for c in LABEL_COLUMNS if c in row]):
         epoch_table.insert(0, col, row[col])
     return probe_row, epoch_table
 
