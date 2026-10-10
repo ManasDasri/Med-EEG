@@ -76,14 +76,21 @@ def rename_and_type_channels(raw: mne.io.BaseRaw) -> mne.io.BaseRaw:
 
 
 def read_line_freq(raw_path: Path) -> float:
-    """Mains frequency from the recording's BIDS sidecar, so the notch filter
-    is right even for data recorded on a 60 Hz grid."""
-    sidecar = raw_path.with_name(raw_path.name.rsplit("_eeg", 1)[0] + "_eeg.json")
-    if sidecar.exists():
-        freq = json.loads(sidecar.read_text()).get("PowerLineFrequency")
-        if isinstance(freq, (int, float)):
-            return float(freq)
-    print(f"[warn] no PowerLineFrequency in {sidecar.name}, "
+    """Mains frequency from the BIDS sidecar, so the notch filter is right
+    for data recorded on a 60 Hz grid. Follows BIDS inheritance: the
+    recording's own _eeg.json first, then task-<task>_eeg.json in each
+    parent folder up to the dataset root (ds008836 keeps it there)."""
+    task = get_entities_from_fname(raw_path).get("task")
+    candidates = [raw_path.with_name(raw_path.name.rsplit("_eeg", 1)[0]
+                                     + "_eeg.json")]
+    candidates += [folder / f"task-{task}_eeg.json"
+                   for folder in raw_path.parents if task]
+    for sidecar in candidates:
+        if sidecar.exists():
+            freq = json.loads(sidecar.read_text()).get("PowerLineFrequency")
+            if isinstance(freq, (int, float)):
+                return float(freq)
+    print(f"[warn] no PowerLineFrequency for {raw_path.name}, "
           f"using {NOTCH_FREQ_HZ} Hz from config.py")
     return NOTCH_FREQ_HZ
 
