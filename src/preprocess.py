@@ -43,6 +43,7 @@ from config import (BANDPASS_HIGH_HZ, BANDPASS_LOW_HZ, BIOSEMI64_TO_1020,
                     PROBE_STIMULUS_VALUE, REJECT_PEAK_TO_PEAK_V,
                     RESAMPLE_HZ, RESPONSE_VALUE_TO_RATING,
                     Paths)  # noqa: E402
+import ds008836  # noqa: E402
 
 mne.set_log_level("WARNING")
 
@@ -75,14 +76,21 @@ def rename_and_type_channels(raw: mne.io.BaseRaw) -> mne.io.BaseRaw:
 
 
 def read_line_freq(raw_path: Path) -> float:
-    """Mains frequency from the recording's BIDS sidecar, so the notch filter
-    is right even for data recorded on a 60 Hz grid."""
-    sidecar = raw_path.with_name(raw_path.name.replace("_eeg.bdf", "_eeg.json"))
-    if sidecar.exists():
-        freq = json.loads(sidecar.read_text()).get("PowerLineFrequency")
-        if isinstance(freq, (int, float)):
-            return float(freq)
-    print(f"[warn] no PowerLineFrequency in {sidecar.name}, "
+    """Mains frequency from the BIDS sidecar, so the notch filter is right
+    for data recorded on a 60 Hz grid. Follows BIDS inheritance: the
+    recording's own _eeg.json first, then task-<task>_eeg.json in each
+    parent folder up to the dataset root (ds008836 keeps it there)."""
+    task = get_entities_from_fname(raw_path).get("task")
+    candidates = [raw_path.with_name(raw_path.name.rsplit("_eeg", 1)[0]
+                                     + "_eeg.json")]
+    candidates += [folder / f"task-{task}_eeg.json"
+                   for folder in raw_path.parents if task]
+    for sidecar in candidates:
+        if sidecar.exists():
+            freq = json.loads(sidecar.read_text()).get("PowerLineFrequency")
+            if isinstance(freq, (int, float)):
+                return float(freq)
+    print(f"[warn] no PowerLineFrequency for {raw_path.name}, "
           f"using {NOTCH_FREQ_HZ} Hz from config.py")
     return NOTCH_FREQ_HZ
 
@@ -98,7 +106,8 @@ def find_eye_components(ica: mne.preprocessing.ICA, raw: mne.io.BaseRaw
     _, scores = ica.find_bads_eog(raw, ch_name=EOG_PROXY_CHS)
     corr = np.abs(np.atleast_2d(scores)).max(axis=0)
     maps = ica.get_components()  # (n_channels, n_components)
-    front = [ica.info["ch_names"].index(ch) for ch in EYE_MAP_CHS]
+    front = [ica.info["ch_names"].index(ch) for ch in EYE_MAP_CHS
+             if ch in ica.info["ch_names"]]  # caps differ (e.g. no Fpz)
     frontal_share = (maps[front] ** 2).sum(axis=0) / (maps ** 2).sum(axis=0)
     return np.flatnonzero((corr >= EOG_MIN_CORR)
                           & (frontal_share >= EOG_MIN_FRONTAL_SHARE)).tolist()
@@ -233,20 +242,33 @@ def epoch_probes(raw: mne.io.BaseRaw, probes: pd.DataFrame
 
 # --- Orchestration ----------------------------------------------------------------
 
-def process_recording(raw_path: Path, deriv_dir: Path
-                      ) -> tuple[list[dict], dict]:
+def load_ds001787(raw_path: Path) -> mne.io.BaseRaw:
+    return rename_and_type_channels(mne.io.read_raw_bdf(raw_path, preload=True))
+
+
+# Per dataset: (recording file pattern, loader, events parser). Everything
+# after loading and windowing is shared.
+DATASETS = {
+    "ds001787": ("*_eeg.bdf", load_ds001787, parse_probes),
+    "ds008836": ("*_eeg.set", ds008836.load_recording, ds008836.parse_reports),
+}
+
+
+def process_recording(raw_path: Path, deriv_dir: Path,
+                      dataset: str = "ds001787") -> tuple[list[dict], dict]:
     """Preprocess one recording end to end. Returns (probe_labels rows,
     QC row)."""
+    _, load, parse_events = DATASETS[dataset]
     entities = get_entities_from_fname(raw_path)
     sub, ses = f"sub-{entities['subject']}", f"ses-{entities['session']}"
     events_path = raw_path.with_name(
-        raw_path.name.replace("_eeg.bdf", "_events.tsv"))
+        raw_path.name.rsplit("_eeg", 1)[0] + "_events.tsv")
     if not events_path.exists():
         raise FileNotFoundError(f"no events.tsv next to {raw_path.name}")
 
     print(f"[..] {sub} / {ses}")
-    probes = parse_probes(pd.read_csv(events_path, sep="\t"))
-    raw = rename_and_type_channels(mne.io.read_raw_bdf(raw_path, preload=True))
+    probes = parse_events(pd.read_csv(events_path, sep="\t"))
+    raw = load(raw_path)
     raw, qc = clean_continuous(raw, read_line_freq(raw_path))
     epochs, planned = epoch_probes(raw, probes)
 
@@ -286,6 +308,10 @@ def process_recording(raw_path: Path, deriv_dir: Path
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bids_root", required=True, type=Path)
+    parser.add_argument("--dataset", choices=list(DATASETS),
+                        default="ds001787",
+                        help="Which dataset's file format and events to "
+                             "read (ds008836: pre-registered replication).")
     parser.add_argument("--subjects", type=str, default=None,
                         help="Comma-separated subject IDs to process, e.g. "
                              "'sub-001,sub-002' -- use this to test the "
@@ -329,12 +355,14 @@ def main() -> None:
     failed: list[str] = []
 
     for sub in subjects:
-        recordings = sorted((paths.bids_root / sub).rglob("*_eeg.bdf"))
+        recordings = sorted((paths.bids_root / sub).rglob(
+            DATASETS[args.dataset][0]))
         if not recordings:
-            print(f"[skip] no .bdf recording found for {sub}")
+            print(f"[skip] no recording found for {sub}")
         for raw_path in recordings:
             try:
-                rows, qc = process_recording(raw_path, paths.derivatives)
+                rows, qc = process_recording(raw_path, paths.derivatives,
+                                             args.dataset)
                 all_rows.extend(rows)
                 qc_rows.append(qc)
             except Exception as e:
@@ -358,7 +386,8 @@ def main() -> None:
     if failed:
         print(f"[warn] {len(failed)} recording(s) failed: {failed} -- "
               f"re-run just those with --subjects once fixed")
-    n_nan = manifest["concentration_rating"].isna().sum()
+    n_nan = (manifest["concentration_rating"].isna().sum()
+             if "concentration_rating" in manifest else 0)
     if n_nan:
         print(f"[warn] {n_nan}/{len(manifest)} probes have no concentration "
               f"answer (probe skipped by the participant) -- dropped "
