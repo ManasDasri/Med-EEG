@@ -83,6 +83,8 @@ src/
   mixed_effects_stats.py  core within-person mixed-effects models (ratio, PAC, time)
   electrode_minimalism.py how few electrodes keep the signal (nested selection)
   robustness_checks.py    session-split, leave-one-out and muscle checks of the leads
+  ds008836.py             adapter for the replication dataset (loader + report windows)
+  replication_ds008836.py the pre-registered replication test
   model_comparison.py     LOSO models + permutation tests + non-EEG baselines + SHAP
   export_dashboard.py     bundle results into dashboard_data.json
   followup_analysis.py    follow-ups: delta power, tiredness, random slopes, expertise
@@ -92,6 +94,8 @@ tests/
   test_models.py          signal vs no-signal model checks (python tests/test_models.py)
   test_electrode_minimalism.py  nested electrode selection checks
   test_robustness_checks.py     cross-session electrode transfer checks
+  test_ds008836.py              replication report-window parser
+  test_replication.py           pre-registered decision rule
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          original single-file KNN prototype
@@ -120,6 +124,11 @@ python src/extract_features.py     --bids_root data/ds001787   # --window_s 30 t
 python src/mixed_effects_stats.py  --bids_root data/ds001787
 python src/electrode_minimalism.py --bids_root data/ds001787 --task mind_wandering   # or concentration
 python src/robustness_checks.py    --bids_root data/ds001787
+
+# replication (phase 6): OpenNeuro ds008836
+python src/preprocess.py           --bids_root data/ds008836 --dataset ds008836
+python src/extract_features.py     --bids_root data/ds008836
+python src/replication_ds008836.py --bids_root data/ds008836
 python src/model_comparison.py     --bids_root data/ds001787 --task expertise  # or concentration, mind_wandering
 python src/export_dashboard.py     --bids_root data/ds001787
 python src/followup_analysis.py    --bids_root data/ds001787   # optional
@@ -167,6 +176,21 @@ carried by gamma power, and survives controlling for temple-electrode gamma, a
 muscle marker (p = 0.003). The one-electrode mind-wandering detector does
 **not** replicate across sessions (p ≈ 0.08–0.09, and a different electrode is
 chosen each way).
+
+### Independent replication (phase 6)
+
+Pre-registered before any EEG was loaded
+([`docs/preregistration_ds008836.md`](docs/preregistration_ds008836.md)), then
+run once on OpenNeuro ds008836 (39 experienced Vipassana meditators, different
+lab, EEG system and rating scale). The prediction: in experienced
+meditators, a higher gamma/theta ratio at Fz + Pz goes with lower reported
+meditation depth.
+
+**Replicated by the pre-registered rule** (estimate −0.067 within-person SD,
+one-sided p = 0.036), but about a third the size seen here, and fragile:
+two-sided p = 0.072. In ds008836 the effect is carried by **theta rising with
+depth**, not by gamma. Details:
+[`docs/replication_ds008836_results.md`](docs/replication_ds008836_results.md).
 
 ## Limitations
 
