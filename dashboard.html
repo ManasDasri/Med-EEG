@@ -62,7 +62,16 @@ function mixHex(hexA, hexB, t){
   const m = a.map((v,i)=> Math.round(v + (b[i]-v)*clamp01(t)));
   return `rgb(${m.join(',')})`;
 }
-const RATIO_MIN = 0.5, RATIO_MAX = 2.5;
+// The dial's range follows the loaded data (raw gamma/theta power ratios
+// are ~0.01-0.05 on real recordings, ~0.5-2.5 in the old sample file).
+let RATIO_MIN = 0.5, RATIO_MAX = 2.5;
+function setRatioRange(subjects){
+  const rs = (subjects||[]).map(s=>s.mean_ratio).filter(v=>v!=null && !Number.isNaN(v));
+  if(rs.length < 2) return;
+  const lo = Math.min(...rs), hi = Math.max(...rs), pad = (hi-lo)*0.1 || hi*0.1;
+  RATIO_MIN = Math.max(0, lo-pad); RATIO_MAX = hi+pad;
+}
+const fmtRatio = v => (+v.toPrecision(2)).toString();
 function ratioToColor(r){
   const t = clamp01(scale(r ?? (RATIO_MIN+RATIO_MAX)/2, RATIO_MIN, RATIO_MAX, 0, 1));
   return mixHex('#C98A46', '#5B92AA', t); // theta -> gamma
@@ -71,6 +80,9 @@ const NICE_MODEL_NAMES = {
   interpretable_ratio_pac: 'Interpretable (ratio + PAC)',
   linear_spectral: 'Linear (all spectral features)',
   boosting_spectral: 'Gradient boosting (all spectral features)',
+  baseline_sex: 'Baseline: sex only (no EEG)',
+  baseline_age: 'Baseline: age only (no EEG)',
+  baseline_time: 'Baseline: time-on-task (no EEG)',
 };
 
 /* ============================= count-up hook ============================= */
@@ -125,9 +137,9 @@ function Dial({ meanRatio }){
   const color = ratioToColor(hasValue ? meanRatio : null);
 
   const ticks = [];
-  for(let v=RATIO_MIN; v<=RATIO_MAX+1e-6; v+=0.25){
-    const rv = Math.round(v*100);
-    const isMajor = rv % 50 === 0;
+  for(let i=0; i<=8; i++){
+    const v = RATIO_MIN + i*(RATIO_MAX-RATIO_MIN)/8;
+    const isMajor = i % 2 === 0;
     const tt = (v-RATIO_MIN)/(RATIO_MAX-RATIO_MIN);
     const a = 180 - tt*180;
     const [x1,y1] = dialPoint(a, R_RIM, CX, CY);
@@ -152,7 +164,7 @@ function Dial({ meanRatio }){
                 className={tk.isMajor ? "dial-tick dial-tick-major" : "dial-tick"} />
         ))}
         {ticks.filter(tk=>tk.isMajor).map((tk,i) => (
-          <text key={i} x={tk.lx} y={tk.ly+3.5} textAnchor="middle" className="dial-tick-label">{tk.v.toFixed(1)}</text>
+          <text key={i} x={tk.lx} y={tk.ly+3.5} textAnchor="middle" className="dial-tick-label">{fmtRatio(tk.v)}</text>
         ))}
         <text x={24} y={144} className="dial-end-label" style={{fill:'var(--theta)'}}>θ slower</text>
         <text x={216} y={144} textAnchor="end" className="dial-end-label" style={{fill:'var(--gamma)'}}>γ faster</text>
@@ -162,7 +174,7 @@ function Dial({ meanRatio }){
         <circle cx={CX} cy={CY} r="6" className="dial-hub" />
       </svg>
       <div className="dial-readout">
-        <div className="dial-readout-val">{hasValue ? animated.toFixed(2) : '—'}</div>
+        <div className="dial-readout-val">{hasValue ? animated.toPrecision(2) : '—'}</div>
         <div className="dial-readout-lbl">mean γ:θ ratio, this session</div>
       </div>
     </div>
@@ -342,6 +354,7 @@ function App(){
 
   function handleLoad(json, name, err){
     if(err){ setStatus("Couldn't parse that file — " + err); return; }
+    setRatioRange(json.subjects);
     setData(json);
     setStatus('Loaded ' + name + ' — ' + (json.n_subjects ?? '?') + ' subjects.');
     if(json.subjects && json.subjects.length) setSubject(json.subjects[0].subject);
@@ -411,7 +424,7 @@ function App(){
       <main className="main">
         <header className="hero">
           <h1>Gamma / theta ratio</h1>
-          <p>The dial reads this session's average γ/θ ratio across every loaded subject. Toward θ is a slower, more drifting rhythm; toward γ is a faster, more focused one.</p>
+          <p>The dial reads the average γ/θ ratio across every loaded subject, on a scale set by the lowest and highest subject. In the full dataset a higher ratio went with <em>more</em> mind wandering (weak, and possibly muscle or eye-movement activity), and it did not track concentration. Read it as a signal level, not a focus meter.</p>
           <Dial meanRatio={meanRatio} />
         </header>
 
@@ -490,8 +503,8 @@ function App(){
         {tab==='electrodes' && (
           <section className="panel">
             <h2>How few electrodes can we get away with?</h2>
-            <p className="desc">Effect of the gamma/theta ratio on concentration rating, per electrode set — minimal (2 electrodes), frontal-theta, and posterior-gamma clusters.</p>
-            <div className="card"><BarChart items={(data?.electrode_minimalism||[]).map(e=>({label:`${e.electrode_set} (${e.n_electrodes})`, value:e.coef, cls:'bar-gamma'}))} /></div>
+            <p className="desc">Within-person AUC of the gamma/theta ratio{data?.model_task ? ` for ${data.model_task}` : ''} using the best 1, 2, 4 … 64 electrodes (chosen on the training people only) and the three predefined clusters. 0.5 = chance; each row's chance level and p-value are in electrode_minimalism_*.csv.</p>
+            <div className="card"><BarChart items={(data?.electrode_minimalism||[]).map(e=>({label: e.electrode_set.startsWith('top_') ? `best ${e.n_electrodes}` : ({frontal_theta:'Fz FCz Cz', posterior_gamma:'Pz POz Oz', minimal:'Fz Pz'}[e.electrode_set] || e.electrode_set), value:e.score, cls:'bar-gamma'}))} /></div>
           </section>
         )}
 

@@ -107,9 +107,18 @@ def prepare(df: pd.DataFrame, task: str) -> pd.DataFrame:
     if "gender" in df.columns:
         df["male"] = (df["gender"].str.upper() == "M").astype(float)
     if kind == "state":
-        cols = INTERPRETABLE_FEATURES + spectral_columns(df)
-        df[cols] = df.groupby(["subject", "session"])[cols].transform(
-            lambda x: (x - x.mean()) / x.std())
+        df = zscore_within_recording(df, INTERPRETABLE_FEATURES
+                                     + spectral_columns(df))
+    return df
+
+
+def zscore_within_recording(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    """Each column minus its recording's mean, over its recording's std:
+    keeps how a feature moves within a session, removes between-person
+    scale. Uses only that recording's EEG, never its labels."""
+    df = df.copy()
+    df[cols] = df.groupby(["subject", "session"])[cols].transform(
+        lambda x: (x - x.mean()) / x.std())
     return df
 
 

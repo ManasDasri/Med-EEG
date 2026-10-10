@@ -7,6 +7,7 @@ Every feature comes from ONE power spectrum per epoch (Welch, 1-45 Hz):
     scalp_<band>_power, <cluster>_theta_power / _gamma_power / _ratio
   - aperiodic slope (30-45 Hz) per region
   - frontal alpha asymmetry (F4 vs F3)
+  - gamma/theta ratio per electrode (ratio_<channel>), for electrode minimalism
 plus, per probe, theta-gamma phase-amplitude coupling for each cluster:
 the Tort Modulation Index corrected for its small-sample bias
 (<cluster>_pac) and its z-score against time-shifted surrogates
@@ -112,6 +113,11 @@ def spectral_features(psd: np.ndarray, freqs: np.ndarray,
     right, left = chans(list(ASYMMETRY_PAIR))
     feats["frontal_alpha_asymmetry"] = (np.log10(band_power["alpha"][..., right])
                                         - np.log10(band_power["alpha"][..., left]))
+    # Gamma/theta ratio for every single electrode, for the electrode-
+    # minimalism analysis (which electrodes carry the signal on their own).
+    ratio = band_power["gamma"] / band_power["theta"]
+    for ch, i in idx.items():
+        feats[f"ratio_{ch}"] = ratio[..., i]
     return feats
 
 

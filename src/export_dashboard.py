@@ -159,7 +159,7 @@ def main() -> None:
     model_comparison = safe_read_csv(
         paths.derivatives / f"model_comparison_{task}.csv") if task else None
     electrode_curve = safe_read_csv(
-        paths.derivatives / "electrode_minimalism_curve.csv")
+        paths.derivatives / f"electrode_minimalism_{task}.csv") if task else None
     shap_path = paths.derivatives / f"shap_importance_{task}.csv"
     shap_df = None
     if task and shap_path.exists():
