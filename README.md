@@ -149,6 +149,14 @@ the time, so a bare accuracy figure without a chance level means little. Full
 analysis: the phase 3 breakdown, and `model_comparison_<task>.csv` in the
 derivatives folder.
 
+Further within-person analyses (mixed models, phase 4): concentration rises
+over a session (p = 0.0005) and slow-wave power tracks drowsiness (lower
+concentration, higher tiredness). Exploratory but robust to per-person random
+slopes and sex: **in experts a higher gamma/theta ratio goes with lower
+concentration, in novices it doesn't** (interaction p = 0.0004). Electrode
+minimalism: for mind wandering one electrode (AF8, chosen on training people
+only) matches the full scalp.
+
 ## Limitations
 
 - **Expertise is confounded with sex** (and partly age) in this dataset; only
