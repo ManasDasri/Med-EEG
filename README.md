@@ -223,3 +223,10 @@ Use `--output_dir RUN_DIR` to collect distinct analysis stages in one run; repea
 a stage in that directory is rejected. Export with `--results_dir RUN_DIR`. Each
 stage records its input hash, code revision, arguments and package versions.
 Historical headline p-values require regeneration from a preserved run.
+
+State-task nulls now circularly shift ratings within each recording; trait labels
+remain shuffled between people. This preserves session membership and circular
+serial order. It assumes approximate stationarity in probe order, not equal
+clock-time spacing; p-values remain exploratory for irregular/nonstationary
+ratings. This outcome-independent audit change must be distinguished from the
+historical unrestricted-shuffle results.

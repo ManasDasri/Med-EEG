@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import N_PERMUTATIONS, RANDOM_STATE, Paths  # noqa: E402
 from electrode_minimalism import within_person_auc  # noqa: E402
 from mixed_effects_stats import TIME, fit_lme, standardise  # noqa: E402
-from model_comparison import prepare, zscore_within_recording  # noqa: E402
+from model_comparison import prepare, shuffled_target, zscore_within_recording  # noqa: E402
 
 OUTCOME = "concentration_rating"
 FIRST_SESSION = "ses-01"
@@ -116,8 +116,8 @@ def lead_2(features: pd.DataFrame, n_permutations: int) -> list[dict]:
         score = within_person_auc(x_test, y[test], subjects[test])[0]
         null = []
         for _ in range(n_permutations):
-            y_perm = pd.Series(y[test]).groupby(subjects[test]).transform(
-                lambda r: rng.permutation(r.to_numpy())).to_numpy()
+            y_perm = shuffled_target(df.loc[test], "mind_wandering_rating",
+                                     "state", rng).to_numpy()
             null.append(within_person_auc(x_test, y_perm, subjects[test])[0])
         rows.append({
             "check": f"2e best electrode, chosen {label}",
