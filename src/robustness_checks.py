@@ -139,6 +139,8 @@ def main() -> None:
                         help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
+    if args.n_permutations < 0:
+        parser.error("n_permutations must be nonnegative")
     paths = Paths.from_root(args.bids_root, args.derivatives)
     from provenance import analysis_output
     input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"

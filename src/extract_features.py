@@ -46,7 +46,7 @@ mne.set_log_level("WARNING")
 
 TOTAL_BAND = (min(lo for lo, _ in ALL_BANDS.values()), BANDPASS_HIGH_HZ)
 # Copied onto every epoch row when present (ds001787 ratings, ds008836 depth).
-LABEL_COLUMNS = ["subject", "session", "probe_index", "concentration_rating",
+LABEL_COLUMNS = ["recording", "subject", "session", "probe_index", "concentration_rating",
                  "mind_wandering_rating", "tiredness_rating", "depth_rating",
                  "block", "block_type", "variant"]
 
@@ -77,6 +77,12 @@ def spectral_features(psd: np.ndarray, freqs: np.ndarray,
     """All spectrum-based features from psd of shape (..., n_channels,
     n_freqs). Works for one averaged spectrum (-> scalars) and for a stack
     of per-epoch spectra (-> one value per epoch)."""
+    psd, freqs = np.asarray(psd, dtype=float), np.asarray(freqs, dtype=float)
+    if psd.shape[-2:] != (len(ch_names), len(freqs)) or len(freqs) < 2:
+        raise ValueError("PSD dimensions do not match channels/frequencies")
+    if not np.isfinite(freqs).all() or not (np.diff(freqs) > 0).all():
+        raise ValueError("Frequencies must be finite and increasing")
+    psd = np.where(np.isfinite(psd) & (psd > 0), psd, np.nan)
     idx = {ch: i for i, ch in enumerate(ch_names)}
 
     def chans(names: list[str]) -> list[int]:
@@ -112,9 +118,12 @@ def spectral_features(psd: np.ndarray, freqs: np.ndarray,
         feats[f"{region}_slope"] = loglog_slope(
             psd[..., c, :].mean(axis=-2), freqs, SLOPE_RANGE_HZ)
 
-    right, left = chans(list(ASYMMETRY_PAIR))
-    feats["frontal_alpha_asymmetry"] = (np.log10(band_power["alpha"][..., right])
-                                        - np.log10(band_power["alpha"][..., left]))
+    if all(ch in idx for ch in ASYMMETRY_PAIR):
+        right, left = [idx[ch] for ch in ASYMMETRY_PAIR]
+        feats["frontal_alpha_asymmetry"] = (np.log10(band_power["alpha"][..., right])
+                                            - np.log10(band_power["alpha"][..., left]))
+    else:
+        feats["frontal_alpha_asymmetry"] = np.full(psd.shape[:-2], np.nan)
     # Gamma/theta ratio for every single electrode, for the electrode-
     # minimalism analysis (which electrodes carry the signal on their own).
     ratio = band_power["gamma"] / band_power["theta"]
@@ -153,12 +162,17 @@ def pac_with_surrogates(theta_phase: np.ndarray, gamma_amp: np.ndarray,
         in short windows)
       - z-score vs the surrogates: EVIDENCE for coupling, > ~2 means real;
         grows with window length when coupling exists."""
+    if len(theta_phase) != len(gamma_amp) or len(gamma_amp) < 10:
+        raise ValueError("PAC needs matching arrays of at least ten samples")
+    if not np.isfinite(theta_phase).all() or not np.isfinite(gamma_amp).all():
+        raise ValueError("PAC samples must be finite")
     mi = tort_modulation_index(theta_phase, gamma_amp)
     n = len(gamma_amp)
     shifts = rng.integers(n // 10, n - n // 10, PAC_N_SURROGATES)
     null = np.array([tort_modulation_index(theta_phase, np.roll(gamma_amp, s))
                      for s in shifts])
-    return mi - null.mean(), float((mi - null.mean()) / null.std())
+    sd = null.std()
+    return mi - null.mean(), float((mi - null.mean()) / sd) if sd > 1e-15 else np.nan
 
 
 def pac_features(epochs: mne.Epochs) -> dict[str, float]:
@@ -296,6 +310,8 @@ def main() -> None:
                         help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
+    if args.window_s is not None and (not np.isfinite(args.window_s) or args.window_s <= 0):
+        parser.error("window_s must be positive and finite")
     paths = Paths.from_root(args.bids_root, args.derivatives)
     manifest_path = paths.derivatives / "probe_labels.csv"
     if not manifest_path.exists():
@@ -306,8 +322,7 @@ def main() -> None:
     rows = [r for r in manifest.to_dict("records")
             if Path(r["epochs_file"]).exists()]
     if len(rows) < len(manifest):
-        print(f"[warn] {len(manifest) - len(rows)} epochs files listed in "
-              f"probe_labels.csv are missing -- re-run preprocess.py")
+        raise FileNotFoundError("Manifest epoch files are missing; rerun preprocessing")
     print(f"[..] extracting features for {len(rows)} probes"
           + (f", last {args.window_s:g} s before each" if args.window_s else ""))
 

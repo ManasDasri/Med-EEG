@@ -105,7 +105,7 @@ def prepare(df: pd.DataFrame, task: str) -> pd.DataFrame:
                          f"participants.tsv)")
     df = df.dropna(subset=[target]).reset_index(drop=True)
     if "gender" in df.columns:
-        df["male"] = (df["gender"].str.upper() == "M").astype(float)
+        df["male"] = df["gender"].str.upper().map({"M": 1.0, "F": 0.0})
     if kind == "state":
         df = zscore_within_recording(df, INTERPRETABLE_FEATURES
                                      + spectral_columns(df))
@@ -225,6 +225,8 @@ def main() -> None:
                         help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
+    if args.n_permutations < 0:
+        parser.error("n_permutations must be nonnegative")
     paths = Paths.from_root(args.bids_root, args.derivatives)
     from provenance import analysis_output
     input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
