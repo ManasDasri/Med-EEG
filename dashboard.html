@@ -346,10 +346,18 @@ function FileLoader({ onLoad, status }){
 }
 
 /* ============================= app ============================= */
+function ResultTable({rows}){
+  if(!rows?.length) return <div className="empty">No results in this run.</div>;
+  const columns = [...new Set(rows.flatMap(r=>Object.keys(r)))].filter(k=>!['fit_diagnostics','electrodes'].includes(k));
+  return <div className="card table-card" style={{overflowX:'auto'}}><table><thead><tr>{columns.map(k=><th key={k}>{k.replaceAll('_',' ')}</th>)}</tr></thead>
+    <tbody>{rows.map((r,i)=><tr key={i}>{columns.map(k=><td key={k}>{typeof r[k]==='number'?fmt(r[k],4):r[k]==null?'—':String(r[k])}</td>)}</tr>)}</tbody></table></div>;
+}
+
 function App(){
   const [data, setData] = useState(null);
   const [status, setStatus] = useState('No session loaded yet.');
   const [subject, setSubject] = useState(null);
+  const [taskChoice, setTaskChoice] = useState("");
   const [recording, setRecording] = useState("");
   const [tab, setTab] = useState('explorer');
 
@@ -358,6 +366,7 @@ function App(){
     setRatioRange(json.subjects);
     setData(json);
     setRecording("");
+    setTaskChoice("");
     setStatus('Loaded ' + name + ' — ' + (json.n_subjects ?? '?') + ' subjects.');
     if(json.subjects && json.subjects.length) setSubject(json.subjects[0].subject);
   }
@@ -368,13 +377,17 @@ function App(){
     return rs.length ? rs.reduce((a,b)=>a+b,0)/rs.length : null;
   }, [data]);
 
+  const availableTasks = Object.keys(data?.tasks||{});
+  const activeTask = availableTasks.includes(taskChoice) ? taskChoice : availableTasks[0] || data?.model_task;
+  const taskResults = data?.tasks?.[activeTask] || data;
+
   const modelGap = useMemo(() => {
     if(!data) return null;
-    const mc = data.model_comparison || [];
+    const mc = taskResults?.model_comparison || [];
     const interp = mc.find(m=>m.model==='interpretable_ratio_pac');
     const best = mc.find(m=>m.model==='boosting_spectral');
     return (interp && best) ? best.score - interp.score : null;
-  }, [data]);
+  }, [data, activeTask]);
 
   const currentSubject = useMemo(() => (data?.subjects||[]).find(s=>s.subject===subject), [data, subject]);
 
@@ -395,6 +408,7 @@ function App(){
     ['models','Model shootout'],
     ['electrodes','Electrode minimalism'],
     ['shap','SHAP audit'],
+    ['statistics','Statistical analyses'],
   ];
 
   return (
@@ -441,9 +455,10 @@ function App(){
           <div className="kpi"><div className="kpi-val">{data ? Math.round(kpiSubjects) : '—'}</div><div className="kpi-lbl">Subjects</div></div>
           <div className="kpi"><div className="kpi-val">{data ? Math.round(kpiProbes) : '—'}</div><div className="kpi-lbl">Probe epochs</div></div>
           <div className="kpi"><div className="kpi-val">{fmt(meanRatio)}</div><div className="kpi-lbl">Mean γ/θ ratio</div></div>
-          <div className="kpi"><div className="kpi-val">{modelGap!=null ? fmt(kpiGap,3) : '—'}</div><div className="kpi-lbl">Interpretable vs. black-box gap</div></div>
+          <div className="kpi"><div className="kpi-val">{modelGap!=null ? fmt(kpiGap,3) : '—'}</div><div className="kpi-lbl">Boosting minus interpretable score</div></div>
         </div>
 
+        {availableTasks.length>0 && <label style={{display:'block',padding:'12px 36px'}}>Analysis task <select aria-label="Analysis task" value={activeTask} onChange={e=>setTaskChoice(e.target.value)}>{availableTasks.map(t=><option key={t}>{t}</option>)}</select></label>}
         <TabBar tabs={TABS} active={tab} onChange={setTab} />
 
         {tab==='explorer' && (
@@ -505,9 +520,10 @@ function App(){
         {tab==='models' && (
           <section className="panel">
             <h2>Interpretable vs black-box shootout</h2>
-            <p className="desc">Leave-one-subject-out score{data?.model_task ? ` for ${data.model_task}` : ''}: the 2-feature ratio+PAC model against linear and gradient-boosting models on all regional spectral features. Each model's chance level and p-value come from shuffled-label runs in model_comparison_*.csv. A small gap supports the project's core hypothesis.</p>
+            <ResultTable rows={taskResults?.model_comparison} />
+            <p className="desc">Leave-one-subject-out score{activeTask ? ` for ${activeTask}` : ''}: the 2-feature ratio+PAC model against linear and gradient-boosting models on all regional spectral features. Each model's chance level and p-value come from shuffled-label runs in model_comparison_*.csv. A small gap alone does not establish useful prediction: compare both models with chance and non-EEG baselines. Results below include uncertainty and fit validity where available.</p>
             <div className="card">
-              <BarChart horizontal items={(data?.model_comparison||[]).map((m,i)=>({label:NICE_MODEL_NAMES[m.model]||m.model, value:m.score, cls:i===0?'bar-theta':'bar-neutral'}))} />
+              <BarChart horizontal items={(taskResults?.model_comparison||[]).map((m,i)=>({label:NICE_MODEL_NAMES[m.model]||m.model, value:m.score, cls:i===0?'bar-theta':'bar-neutral'}))} />
             </div>
           </section>
         )}
@@ -515,8 +531,9 @@ function App(){
         {tab==='electrodes' && (
           <section className="panel">
             <h2>How few electrodes can we get away with?</h2>
-            <p className="desc">Within-person AUC of the gamma/theta ratio{data?.model_task ? ` for ${data.model_task}` : ''} using the best 1, 2, 4 … 64 electrodes (chosen on the training people only) and the three predefined clusters. 0.5 = chance; each row's chance level and p-value are in electrode_minimalism_*.csv.</p>
-            <div className="card"><BarChart items={(data?.electrode_minimalism||[]).map(e=>({label: e.electrode_set.startsWith('top_') ? `best ${e.n_electrodes}` : ({frontal_theta:'Fz FCz Cz', posterior_gamma:'Pz POz Oz', minimal:'Fz Pz'}[e.electrode_set] || e.electrode_set), value:e.score, cls:'bar-gamma'}))} /></div>
+            <ResultTable rows={taskResults?.electrode_minimalism} />
+            <p className="desc">Within-person AUC of the gamma/theta ratio{activeTask ? ` for ${activeTask}` : ''} using the best 1, 2, 4 … 64 electrodes (chosen on the training people only) and the three predefined clusters. 0.5 = chance; each row's chance level and p-value are in electrode_minimalism_*.csv.</p>
+            <div className="card"><BarChart items={(taskResults?.electrode_minimalism||[]).map(e=>({label: e.electrode_set.startsWith('top_') ? `best ${e.n_electrodes}` : ({frontal_theta:'Fz FCz Cz', posterior_gamma:'Pz POz Oz', minimal:'Fz Pz'}[e.electrode_set] || e.electrode_set), value:e.score, cls:'bar-gamma'}))} /></div>
           </section>
         )}
 
@@ -524,9 +541,13 @@ function App(){
           <section className="panel">
             <h2>Is the black-box model actually using theta/gamma?</h2>
             <p className="desc">SHAP feature importance for the Random Forest model — sanity check that it leans on the bands this project is testing, not an artifact.</p>
-            <div className="card"><BarChart horizontal items={[...(data?.shap_importance||[])].sort((a,b)=>b.importance-a.importance).map(s=>({label:s.feature, value:s.importance, cls:'bar-neutral'}))} /></div>
+            <div className="card"><BarChart horizontal items={[...(taskResults?.shap_importance||[])].sort((a,b)=>b.importance-a.importance).map(s=>({label:s.feature, value:s.importance, cls:'bar-neutral'}))} /></div>
           </section>
         )}
+        {tab==='statistics' && <section className="panel"><h2>Statistical analyses</h2>
+          <p>Only the prespecified primary replication tests the registered hypothesis. Follow-ups and robustness analyses are exploratory. Invalid fits withhold inference.</p>
+          {Object.entries(data?.statistics||{}).map(([name,rows])=><div key={name}><h3>{name.replaceAll('_',' ')}</h3><ResultTable rows={rows}/></div>)}
+        </section>}
       </main>
     </div>
   );
