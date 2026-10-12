@@ -265,19 +265,21 @@ def exclude_poor_recordings(manifest: pd.DataFrame, qc_path: Path
     """Drop probes from recordings that failed the quality limits in
     config.py (too many bad channels or rejected epochs)."""
     if not qc_path.exists():
-        print(f"[warn] {qc_path.name} not found -- no quality exclusion")
-        return manifest
+        raise FileNotFoundError(f"Required QC missing: {qc_path}; run preprocessing")
     qc = pd.read_csv(qc_path)
-    n_eeg = len(BIOSEMI64_TO_1020)  # 64 scalp channels
-    poor = qc[(qc["n_bad_channels"] / n_eeg > MAX_BAD_CHANNEL_FRACTION)
-              | (qc["epoch_reject_rate"] > MAX_EPOCH_REJECT_RATE)]
-    for r in poor.itertuples():
-        print(f"[excluded] {r.subject} / {r.session}: {r.n_bad_channels} bad "
-              f"channels, {r.epoch_reject_rate:.0%} epochs rejected")
-    bad = set(zip(poor["subject"], poor["session"]))
-    keep = [(s, ses) not in bad
-            for s, ses in zip(manifest["subject"], manifest["session"])]
-    return manifest[keep]
+    if "n_eeg_channels" not in qc:
+        raise ValueError("QC lacks EEG channel counts; rerun corrected preprocessing")
+    keys = ["recording"] if "recording" in manifest and "recording" in qc else ["subject", "session"]
+    merged = manifest.merge(qc[keys + ["n_eeg_channels", "n_bad_channels", "epoch_reject_rate"]],
+                            on=keys, how="left", validate="many_to_one", indicator=True)
+    if (merged["_merge"] != "both").any():
+        raise ValueError("Some probes have no recording QC")
+    valid = (merged["n_eeg_channels"].gt(0)
+             & merged["n_bad_channels"].ge(0)
+             & (merged["n_bad_channels"] / merged["n_eeg_channels"]).le(MAX_BAD_CHANNEL_FRACTION)
+             & merged["epoch_reject_rate"].between(0, MAX_EPOCH_REJECT_RATE))
+    print(f"[excluded] {int((~valid).sum())} probes failed recording QC")
+    return merged.loc[valid, manifest.columns].reset_index(drop=True)
 
 
 def main() -> None:

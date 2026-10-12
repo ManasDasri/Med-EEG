@@ -159,6 +159,7 @@ def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
 
     return raw, {
         "line_freq_hz": line_freq,
+        "n_eeg_channels": len(mne.pick_types(raw.info, eeg=True, exclude=[])),
         "n_bad_channels": len(bads),
         "bad_channels": ";".join(bads),
         "n_ica_eog_removed": len(eog_idx),
