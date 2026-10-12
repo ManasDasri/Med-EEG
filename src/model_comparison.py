@@ -221,9 +221,11 @@ def main() -> None:
                              "(0 = skip, much faster)")
     parser.add_argument("--output_dir", type=Path, default=None,
                         help="New result directory; defaults to a unique run directory")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
     from provenance import analysis_output
     input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
     output_dir = analysis_output(paths, args, [input_path])

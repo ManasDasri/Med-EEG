@@ -135,9 +135,11 @@ def main() -> None:
                          help="Output JSON path (default: "
                               "derivatives/dashboard_data.json)")
     parser.add_argument("--results_dir", type=Path, default=None)
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
         raise SystemExit(f"{feat_path} not found -- run extract_features.py "

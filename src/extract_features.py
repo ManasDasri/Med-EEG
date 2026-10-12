@@ -290,9 +290,11 @@ def main() -> None:
     parser.add_argument("--n_jobs", type=int, default=-1,
                         help="Probes processed in parallel (-1 = all CPU "
                              "cores, 1 = sequential, easier to debug).")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
     manifest_path = paths.derivatives / "probe_labels.csv"
     if not manifest_path.exists():
         raise SystemExit(f"{manifest_path} not found -- run preprocess.py "

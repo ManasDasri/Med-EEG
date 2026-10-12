@@ -81,6 +81,8 @@ def main() -> None:
     parser.add_argument("--bids_root", required=True, type=Path,
                          help="Path to the downloaded ds001787 / BIDS_EEG_"
                               "meditation_experiment folder")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
     if not args.bids_root.exists():
@@ -89,7 +91,7 @@ def main() -> None:
             f"(see README.md) -- it's several GB, this script won't fetch "
             f"it for you.")
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
     subjects = find_subjects(paths.bids_root)
     print(f"[ok] found {len(subjects)} subjects: {subjects}")
     if len(subjects) != 24:
