@@ -248,3 +248,7 @@ real-time prediction. Prospective validation requires a separate past-only
 preprocessing/calibration protocol, fixed before testing, and forward-time
 evaluation on new recordings. Such a live predictor is outside this repository's
 current claims; the exported evaluation scope makes this distinction explicit.
+
+SHAP tables describe the gradient-boosting model fitted on the full dataset and
+are explicitly marked `in_sample_full_dataset`. They do not explain held-out
+predictions or independently establish generalization.

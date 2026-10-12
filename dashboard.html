@@ -540,7 +540,7 @@ function App(){
         {tab==='shap' && (
           <section className="panel">
             <h2>Is the black-box model actually using theta/gamma?</h2>
-            <p className="desc">SHAP feature importance for the Random Forest model — sanity check that it leans on the bands this project is testing, not an artifact.</p>
+            <p className="desc">In-sample SHAP for the gradient-boosting model fitted to all available data. These are descriptive training-data explanations, not held-out evidence of generalization.</p>
             <div className="card"><BarChart horizontal items={[...(taskResults?.shap_importance||[])].sort((a,b)=>b.importance-a.importance).map(s=>({label:s.feature, value:s.importance, cls:'bar-neutral'}))} /></div>
           </section>
         )}

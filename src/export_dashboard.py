@@ -169,7 +169,8 @@ def main() -> None:
     shap_df = None
     if task and shap_path.exists():
         shap_df = pd.read_csv(shap_path)
-        shap_df.columns = ["feature", "importance"]
+        if not {"feature", "importance"}.issubset(shap_df):
+            raise ValueError("SHAP table lacks feature/importance columns")
 
     def records(name):
         path = results_dir / name

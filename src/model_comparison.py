@@ -255,8 +255,10 @@ def shap_audit(df: pd.DataFrame, features: list[str], task: str,
     values = values[..., -1] if np.ndim(values) == 3 else values
     importance = pd.Series(np.abs(values).mean(axis=0), index=features,
                            name="importance").sort_values(ascending=False)
-    importance.rename_axis("feature").to_csv(out_dir / f"shap_importance_{task}.csv")
-    print("\n=== SHAP: top 10 features (boosting_spectral) ===")
+    importance.rename_axis("feature").to_frame().assign(
+        scope="in_sample_full_dataset", model="boosting_spectral").to_csv(
+            out_dir / f"shap_importance_{task}.csv")
+    print("\n=== In-sample SHAP: top 10 features (boosting_spectral) ===")
     print(importance.head(10).round(4).to_string())
 
 
