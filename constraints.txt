@@ -1,0 +1,14 @@
+# Tested with Python 3.14; update intentionally with regression tests.
+mne==1.13.2
+mne-bids==0.20.0
+openneuro-py==2026.9.1
+numpy==2.5.3
+scipy==1.18.1
+pandas==3.0.6
+scikit-learn==1.9.1
+joblib==1.6.0
+statsmodels==0.15.0
+shap==0.53.0
+matplotlib==3.11.2
+seaborn==0.13.2
+pyarrow==26.0.0
