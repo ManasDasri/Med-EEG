@@ -223,9 +223,9 @@ class Paths:
     derivatives: Path
 
     @classmethod
-    def from_root(cls, bids_root: str | Path) -> "Paths":
+    def from_root(cls, bids_root: str | Path, derivatives: str | Path | None = None) -> "Paths":
         root = Path(bids_root)
-        deriv = root / "derivatives" / "neurodial"
+        deriv = Path(derivatives) if derivatives else root / "derivatives" / "neurodial"
         deriv.mkdir(parents=True, exist_ok=True)
         return cls(bids_root=root, derivatives=deriv)
 

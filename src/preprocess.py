@@ -320,9 +320,11 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None,
                         help="Only process the first N subjects found -- "
                              "another quick way to test on a subset.")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
     subjects = sorted(p.name for p in paths.bids_root.glob("sub-*")
                       if p.is_dir())
 
@@ -358,7 +360,8 @@ def main() -> None:
         recordings = sorted((paths.bids_root / sub).rglob(
             DATASETS[args.dataset][0]))
         if not recordings:
-            print(f"[skip] no recording found for {sub}")
+            failed.append(sub)
+            print(f"[ERROR] no recording found for {sub}")
         for raw_path in recordings:
             try:
                 rows, qc = process_recording(raw_path, paths.derivatives,
@@ -386,6 +389,8 @@ def main() -> None:
     if failed:
         print(f"[warn] {len(failed)} recording(s) failed: {failed} -- "
               f"re-run just those with --subjects once fixed")
+    if failed:
+        raise SystemExit(1)
     n_nan = (manifest["concentration_rating"].isna().sum()
              if "concentration_rating" in manifest else 0)
     if n_nan:
