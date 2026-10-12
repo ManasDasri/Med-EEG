@@ -117,7 +117,7 @@ def zscore_within_recording(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     keeps how a feature moves within a session, removes between-person
     scale. Uses only that recording's EEG, never its labels."""
     df = df.copy()
-    df[cols] = df.groupby(["subject", "session"])[cols].transform(
+    df[cols] = df.groupby(["recording"] if "recording" in df else ["subject", "session"])[cols].transform(
         lambda x: (x - x.mean()) / x.std())
     return df
 
@@ -158,13 +158,19 @@ def shuffled_target(df: pd.DataFrame, target: str, kind: str,
                     rng: np.random.Generator) -> pd.Series:
     """Labels with the real EEG-label link broken but the structure kept:
     trait labels are reassigned between PEOPLE; state ratings are shuffled
-    WITHIN each person (keeps each person's rating habits)."""
+    by a circular shift WITHIN each recording (preserves rating order)."""
     if kind == "trait":
         labels = df.groupby("subject")[target].first()
         return df["subject"].map(pd.Series(rng.permutation(labels.to_numpy()),
                                            index=labels.index))
-    return df.groupby("subject")[target].transform(
-        lambda s: rng.permutation(s.to_numpy()))
+    shuffled = df[target].copy()
+    keys = ["recording"] if "recording" in df else ["subject", "session"]
+    order = [c for c in ("probe_onset_s", "probe_index") if c in df]
+    for _, group in df.groupby(keys, sort=False):
+        if order: group = group.sort_values(order, kind="stable")
+        # Include zero: identity is part of the circular-shift null group.
+        shuffled.loc[group.index] = np.roll(group[target].to_numpy(), rng.integers(len(group)))
+    return shuffled
 
 
 def evaluate(df: pd.DataFrame, task: str, name: str, features: list[str],

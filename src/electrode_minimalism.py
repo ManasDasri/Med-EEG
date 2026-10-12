@@ -29,7 +29,7 @@ from scipy.stats import rankdata
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import N_PERMUTATIONS, PAC_CLUSTERS, RANDOM_STATE, Paths  # noqa: E402
-from model_comparison import TASKS, prepare, zscore_within_recording  # noqa: E402
+from model_comparison import TASKS, prepare, shuffled_target, zscore_within_recording  # noqa: E402
 
 N_ELECTRODES = [1, 2, 4, 8, 16, 32, 64]
 
@@ -118,8 +118,7 @@ def main() -> None:
 
     def shuffled(seed: int) -> dict[str, float]:
         rng = np.random.default_rng(seed)
-        y_perm = pd.Series(y).groupby(subjects).transform(
-            lambda r: rng.permutation(r.to_numpy())).to_numpy()
+        y_perm = shuffled_target(df, TASKS[args.task][0], "state", rng).to_numpy()
         return curve(X, y_perm, subjects, clusters)
 
     null = pd.DataFrame(Parallel(n_jobs=-1)(
