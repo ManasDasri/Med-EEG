@@ -104,7 +104,7 @@ tests/
   test_replication.py           pre-registered decision rule
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
-knn_prototype.py          original single-file KNN prototype
+knn_prototype.py          retirement notice for the invalid historical prototype
 requirements.txt
 ```
 
