@@ -219,9 +219,14 @@ def main() -> None:
     parser.add_argument("--n_permutations", type=int, default=N_PERMUTATIONS,
                         help="Shuffled-label repeats for the p-value "
                              "(0 = skip, much faster)")
+    parser.add_argument("--output_dir", type=Path, default=None,
+                        help="New result directory; defaults to a unique run directory")
     args = parser.parse_args()
 
     paths = Paths.from_root(args.bids_root)
+    from provenance import analysis_output
+    input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
+    output_dir = analysis_output(paths, args, [input_path])
     feat_path = args.features or paths.derivatives / "features.parquet"
     if not feat_path.exists():
         raise SystemExit(f"{feat_path} not found -- run extract_features.py")
@@ -252,17 +257,17 @@ def main() -> None:
         ["model", "metric", "score", "chance", "p_value"]
         + [c for c in ("auc", "n_scored_subjects") if c in results[0]]
         + ["n_features", "n_subjects", "n_probes"]]
-    summary.to_csv(paths.derivatives / f"model_comparison_{args.task}.csv",
+    summary.to_csv(output_dir / f"model_comparison_{args.task}.csv",
                    index=False)
     eeg = summary[~summary["model"].str.startswith("baseline_")]
     best = eeg.loc[eeg["score"].idxmax(), "model"]
     pd.DataFrame({"subject": df["subject"], "session": df["session"],
                   "probe_index": df["probe_index"], "target": df[target],
                   "prediction": preds[best], "model": best}).to_csv(
-        paths.derivatives / f"predictions_{args.task}.csv", index=False)
+        output_dir / f"predictions_{args.task}.csv", index=False)
 
     shap_audit(df, feature_sets["boosting_spectral"], args.task,
-               paths.derivatives)
+               output_dir)
     print(f"\n[ok] wrote model_comparison_{args.task}.csv, "
           f"predictions_{args.task}.csv, shap_importance_{args.task}.csv "
           f"to {paths.derivatives}")

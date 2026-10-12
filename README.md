@@ -158,9 +158,9 @@ results, leaving 23 people and 929 probes.
 
 | Question | Best EEG result | Non-EEG baseline | Verdict |
 |---|---|---|---|
-| Expert vs novice | 78.3% of people (18/23), p = 0.012 | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
+| Expert vs novice | 78.3% of people (18/23), historical p unverified | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
 | Concentration, moment to moment | within-person AUC 0.54 (n.s.) | time-on-task: 0.56 | No signal |
-| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), p = 0.004; one electrode (AF8) alone: 0.63 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the single-electrode result does not replicate across sessions |
+| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), historical p unverified; one electrode (AF8) alone: 0.63 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the single-electrode result does not replicate across sessions |
 
 With 24 people, a model with **no signal** reaches ≥ 70% accuracy about 8% of
 the time, so a bare accuracy figure without a chance level means little. Full
@@ -217,3 +217,9 @@ If you use the dataset, cite the original authors:
 ## License
 
 [MIT](LICENSE)
+
+Analysis commands write a new `derivatives/neurodial/runs/` directory by default.
+Use `--output_dir RUN_DIR` to collect distinct analysis stages in one run; repeating
+a stage in that directory is rejected. Export with `--results_dir RUN_DIR`. Each
+stage records its input hash, code revision, arguments and package versions.
+Historical headline p-values require regeneration from a preserved run.

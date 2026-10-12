@@ -134,6 +134,7 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=None,
                          help="Output JSON path (default: "
                               "derivatives/dashboard_data.json)")
+    parser.add_argument("--results_dir", type=Path, default=None)
     args = parser.parse_args()
 
     paths = Paths.from_root(args.bids_root)
@@ -150,17 +151,19 @@ def main() -> None:
         print("[warn] no participants.tsv found -- group/age/gender and "
               "the group-comparison panel will be empty in the dashboard.")
 
+    results_dir = args.results_dir or paths.derivatives
+
     # model_comparison.py writes one file per task. The dashboard headlines
     # the first task found, in this order (concentration is the project's
     # core question).
     tasks = ["concentration", "expertise", "mind_wandering"]
-    task = next((t for t in tasks if (paths.derivatives /
+    task = next((t for t in tasks if (results_dir /
                  f"model_comparison_{t}.csv").exists()), None)
     model_comparison = safe_read_csv(
-        paths.derivatives / f"model_comparison_{task}.csv") if task else None
+        results_dir / f"model_comparison_{task}.csv") if task else None
     electrode_curve = safe_read_csv(
-        paths.derivatives / f"electrode_minimalism_{task}.csv") if task else None
-    shap_path = paths.derivatives / f"shap_importance_{task}.csv"
+        results_dir / f"electrode_minimalism_{task}.csv") if task else None
+    shap_path = results_dir / f"shap_importance_{task}.csv"
     shap_df = None
     if task and shap_path.exists():
         shap_df = pd.read_csv(shap_path)
@@ -181,7 +184,7 @@ def main() -> None:
                            if shap_df is not None else [],
     }
 
-    out_path = args.out or (paths.derivatives / "dashboard_data.json")
+    out_path = args.out or (results_dir / "dashboard_data.json")
     out_path.write_text(json.dumps(_sanitize_for_json(payload), indent=2,
                                     allow_nan=False))
     print(f"[ok] wrote {out_path}")
