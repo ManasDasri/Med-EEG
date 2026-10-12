@@ -171,7 +171,22 @@ def main() -> None:
         shap_df = pd.read_csv(shap_path)
         shap_df.columns = ["feature", "importance"]
 
+    def records(name):
+        path = results_dir / name
+        return clean_records(pd.read_csv(path)) if path.exists() else []
+
+    task_results = {t: {"model_comparison": records(f"model_comparison_{t}.csv"),
+                        "electrode_minimalism": records(f"electrode_minimalism_{t}.csv"),
+                        "shap_importance": records(f"shap_importance_{t}.csv")}
+                    for t in tasks if any((results_dir / f"{prefix}_{t}.csv").exists()
+                        for prefix in ("model_comparison", "electrode_minimalism", "shap_importance"))}
+    statistics = {name: records(name + ".csv") for name in
+                  ("lme_results", "lme_followup_results", "robustness_checks", "replication_results")}
+
     payload = {
+        "schema_version": 2,
+        "tasks": task_results,
+        "statistics": statistics,
         "generated_at": pd.Timestamp.now().isoformat(),
         "model_task": task,
         "n_subjects": int(features["subject"].nunique()),
