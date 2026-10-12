@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -49,14 +48,14 @@ def interaction(features: pd.DataFrame, predictor: str,
                      [predictor, *extra])
     control_terms = f" + {control} * group" if control else ""
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            _, tidy = fit_lme(df, f"{OUTCOME} ~ {predictor} * group + "
-                                  f"{predictor} * gender{control_terms} + "
-                                  f"{TIME}", "check",
-                              re_formula=f"~{predictor}")
+        _, tidy = fit_lme(df, f"{OUTCOME} ~ {predictor} * group + "
+                              f"{predictor} * gender{control_terms} + "
+                              f"{TIME}", "check",
+                          re_formula=f"~{predictor}")
         row = tidy[tidy["term"] == f"{predictor}:group[T.novice]"].iloc[0]
-        return {"estimate": row["coef"], "ci_low": row["ci_low"],
+        return {"fit_valid": bool(row["fit_valid"]),
+            "fit_diagnostics": row["fit_diagnostics"],
+            "estimate": row["coef"], "ci_low": row["ci_low"],
                 "ci_high": row["ci_high"], "p_value": row["p_value"],
                 "n_subjects": df["subject"].nunique()}
     except (np.linalg.LinAlgError, ValueError, IndexError) as e:
@@ -76,7 +75,8 @@ def lead_1(features: pd.DataFrame) -> list[dict]:
     jack = pd.DataFrame([{"left_out": s, **interaction(
         features[features["subject"] != s], "minimal_ratio")}
         for s in sorted(features["subject"].unique())])
-    worst = jack.loc[jack["p_value"].idxmax()]
+    valid_jack = jack.dropna(subset=["p_value"])
+    worst = valid_jack.loc[valid_jack["p_value"].idxmax()] if len(valid_jack) else jack.iloc[0]
     rows.append({"check": "1b leave-one-person-out: weakest refit",
                  "estimate": worst["estimate"], "p_value": worst["p_value"],
                  "n_subjects": worst["n_subjects"],
@@ -138,7 +138,7 @@ def main() -> None:
     paths = Paths.from_root(args.bids_root)
     features = pd.read_parquet(paths.derivatives / "features.parquet")
     out = pd.DataFrame(lead_1(features) + lead_2(features, args.n_permutations))
-    cols = ["check", "estimate", "ci_low", "ci_high", "p_value", "n_subjects", "note"]
+    cols = ["check", "estimate", "ci_low", "ci_high", "p_value", "n_subjects", "fit_valid", "fit_diagnostics", "note"]
     out = out.reindex(columns=cols)
     out.to_csv(paths.derivatives / "robustness_checks.csv", index=False)
     with pd.option_context("display.width", 200, "display.max_colwidth", 70):
