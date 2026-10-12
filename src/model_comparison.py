@@ -154,6 +154,47 @@ def score(df: pd.DataFrame, target: pd.Series, pred: np.ndarray, kind: str
             "n_scored_subjects": len(aucs)}
 
 
+def subject_scores(df, target, pred, kind):
+    frame = pd.DataFrame({"subject": df["subject"].to_numpy(),
+                          "target": np.asarray(target), "prediction": pred})
+    rows = []
+    for subject, group in frame.groupby("subject"):
+        if kind == "trait":
+            value = float((group.prediction.mean() > .5) == group.target.iloc[0])
+        else:
+            high = group.target > group.target.mean()
+            if high.nunique() < 2: continue
+            value = roc_auc_score(high, group.prediction)
+        rows.append({"subject": subject, "score": value})
+    return pd.DataFrame(rows, columns=["subject", "score"])
+
+
+def mean_interval(values):
+    values = np.asarray(values, dtype=float)
+    values = values[np.isfinite(values)]
+    if not len(values): return np.nan, np.nan
+    rng = np.random.default_rng(RANDOM_STATE)
+    means = rng.choice(values, size=(2000, len(values)), replace=True).mean(axis=1)
+    return tuple(np.quantile(means, [.025, .975]))
+
+
+def paired_comparisons(scores):
+    rows = []
+    for model in scores.model.unique():
+        if model.startswith("baseline_"): continue
+        for baseline in scores.model.unique():
+            if not baseline.startswith("baseline_"): continue
+            paired = scores[scores.model == model].merge(
+                scores[scores.model == baseline], on="subject", suffixes=("_eeg", "_baseline"))
+            differences = paired.score_eeg - paired.score_baseline
+            low, high = mean_interval(differences)
+            rows.append({"model": model, "baseline": baseline,
+                         "mean_difference": differences.mean(), "ci_low": low,
+                         "ci_high": high, "n_subjects": len(paired),
+                         "interval_scope": "descriptive subject bootstrap; fixed out-of-fold predictions"})
+    return pd.DataFrame(rows)
+
+
 def shuffled_target(df: pd.DataFrame, target: str, kind: str,
                     rng: np.random.Generator) -> pd.Series:
     """Labels with the real EEG-label link broken but the structure kept:
@@ -174,7 +215,7 @@ def shuffled_target(df: pd.DataFrame, target: str, kind: str,
 
 
 def evaluate(df: pd.DataFrame, task: str, name: str, features: list[str],
-             n_permutations: int) -> tuple[dict, np.ndarray]:
+             n_permutations: int, n_jobs: int = 2) -> tuple[dict, np.ndarray]:
     target, kind = TASKS[task]
     pred = loso_predictions(df, features, df[target], name, kind)
     result = score(df, df[target], pred, kind)
@@ -184,9 +225,13 @@ def evaluate(df: pd.DataFrame, task: str, name: str, features: list[str],
         return score(df, y, loso_predictions(df, features, y, name, kind),
                      kind)["score"]
 
-    null = np.array(Parallel(n_jobs=-1)(
+    null = np.array(Parallel(n_jobs=n_jobs)(
         delayed(null_score)(RANDOM_STATE + i) for i in range(n_permutations)))
+    ci_low, ci_high = mean_interval(subject_scores(df, df[target], pred, kind)["score"])
     result.update({
+        "ci_low": ci_low, "ci_high": ci_high,
+        "n_permutations": n_permutations,
+        "null_method": "subject_label_shuffle" if kind == "trait" else "recording_circular_shift",
         "model": name,
         "n_features": len(features),
         "chance": float(null.mean()) if n_permutations else np.nan,
@@ -225,6 +270,7 @@ def main() -> None:
     parser.add_argument("--n_permutations", type=int, default=N_PERMUTATIONS,
                         help="Shuffled-label repeats for the p-value "
                              "(0 = skip, much faster)")
+    parser.add_argument("--n_jobs", type=int, default=2)
     parser.add_argument("--output_dir", type=Path, default=None,
                         help="New result directory; defaults to a unique run directory")
     parser.add_argument("--derivatives", type=Path, default=None,
@@ -258,23 +304,32 @@ def main() -> None:
     results, preds = [], {}
     for name, cols in feature_sets.items():
         result, preds[name] = evaluate(df, args.task, name, cols,
-                                       args.n_permutations)
+                                       args.n_permutations, args.n_jobs)
         results.append(result)
         print(f"  {name:24s} {result['metric']}={result['score']:.3f}  "
               f"(chance {result['chance']:.3f}, p={result['p_value']:.3f})")
 
-    summary = pd.DataFrame(results)[
-        ["model", "metric", "score", "chance", "p_value"]
-        + [c for c in ("auc", "n_scored_subjects") if c in results[0]]
-        + ["n_features", "n_subjects", "n_probes"]]
-    summary.to_csv(output_dir / f"model_comparison_{args.task}.csv",
-                   index=False)
-    eeg = summary[~summary["model"].str.startswith("baseline_")]
-    best = eeg.loc[eeg["score"].idxmax(), "model"]
-    pd.DataFrame({"subject": df["subject"], "session": df["session"],
-                  "probe_index": df["probe_index"], "target": df[target],
-                  "prediction": preds[best], "model": best}).to_csv(
+    from statsmodels.stats.multitest import multipletests
+    summary = pd.DataFrame(results)
+    summary["p_holm_task"] = np.nan
+    tested = summary["p_value"].notna()
+    if tested.any():
+        summary.loc[tested, "p_holm_task"] = multipletests(
+            summary.loc[tested, "p_value"], method="holm")[1]
+    summary["multiplicity_family"] = f"all models including baselines for {args.task}"
+    summary.to_csv(output_dir / f"model_comparison_{args.task}.csv", index=False)
+    all_predictions, per_subject = [], []
+    for name, prediction in preds.items():
+        frame = df[["subject", "session", "probe_index"]].copy()
+        if "recording" in df: frame["recording"] = df["recording"]
+        frame["target"], frame["prediction"], frame["model"] = df[target], prediction, name
+        all_predictions.append(frame)
+        per_subject.append(subject_scores(df, df[target], prediction, kind).assign(model=name))
+    pd.concat(all_predictions, ignore_index=True).to_csv(
         output_dir / f"predictions_{args.task}.csv", index=False)
+    scores = pd.concat(per_subject, ignore_index=True)
+    scores.to_csv(output_dir / f"subject_scores_{args.task}.csv", index=False)
+    paired_comparisons(scores).to_csv(output_dir / f"baseline_comparisons_{args.task}.csv", index=False)
 
     shap_audit(df, feature_sets["boosting_spectral"], args.task,
                output_dir)
