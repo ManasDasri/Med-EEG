@@ -114,7 +114,7 @@ requirements.txt
 git clone https://github.com/ManasDasri/Med-EEG.git
 cd Med-EEG
 python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements.txt -c constraints.txt
 
 # download the dataset (~6 GB)
 openneuro-py download --dataset ds001787 --target_dir data/ds001787
@@ -252,3 +252,25 @@ current claims; the exported evaluation scope makes this distinction explicit.
 SHAP tables describe the gradient-boosting model fitted on the full dataset and
 are explicitly marked `in_sample_full_dataset`. They do not explain held-out
 predictions or independently establish generalization.
+
+### Portable run workflow
+
+Use Python 3.14 with `requirements.txt` and the tested `constraints.txt`. From
+a fresh clone, the maintained downloader and pipeline are in `scripts/`:
+
+```bash
+python scripts/download_dataset.py --dataset ds001787 --bids_root ../ds001787
+python scripts/run_pipeline.py --dataset ds001787 --bids_root ../ds001787 --run_dir ../runs/discovery-001 --n_permutations 100
+python scripts/run_pipeline.py --dataset ds008836 --bids_root ../ds008836 --run_dir ../runs/replication-001 --stages preprocess,features,stats,export
+python scripts/run_tests.py
+```
+
+Each run owns its intermediate directory, logs, result tables and completion
+markers. For analysis of existing corrected intermediates, pass `--derivatives
+PATH --stages models,stats,export`. A named run refuses completed stages; choose
+a new directory for a new experiment. Legacy shell entry points live in
+`scripts/` and accept `EEG_PYTHON` / `EEG_BIDS_ROOT`; they no longer watch log
+text or mark failed subjects as complete. Keep raw EEG and large generated
+derivatives outside Git, and preserve selected small result summaries/manifests
+with the research report. Downloads use complete pinned object manifests;
+ETags pin object identity, and multipart ETags are not represented as MD5 hashes.
