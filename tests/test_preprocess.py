@@ -49,3 +49,8 @@ assert parse_probes(events.sample(frac=1, random_state=0)).equals(
     p.reset_index())
 
 print("ok: parse_probes")
+
+from preprocess import ica_decimation
+assert ica_decimation(256) == 2
+assert 256 / ica_decimation(256) / 2 > 45 * 1.25
+assert ica_decimation(128) == 1
