@@ -86,9 +86,14 @@ def main() -> None:
     parser.add_argument("--task", choices=[t for t, (_, kind) in TASKS.items()
                                            if kind == "state"], required=True)
     parser.add_argument("--n_permutations", type=int, default=N_PERMUTATIONS)
+    parser.add_argument("--output_dir", type=Path, default=None,
+                        help="New result directory; defaults to a unique run directory")
     args = parser.parse_args()
 
     paths = Paths.from_root(args.bids_root)
+    from provenance import analysis_output
+    input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
+    output_dir = analysis_output(paths, args, [input_path])
     df = prepare(pd.read_parquet(paths.derivatives / "features.parquet"),
                  args.task)
     channels = [c[len("ratio_"):] for c in df.columns if c.startswith("ratio_")]
@@ -132,7 +137,7 @@ def main() -> None:
             else " ".join(PAC_CLUSTERS[name]),
         })
     out = pd.DataFrame(rows)
-    out_path = paths.derivatives / f"electrode_minimalism_{args.task}.csv"
+    out_path = output_dir / f"electrode_minimalism_{args.task}.csv"
     out.to_csv(out_path, index=False)
     print(f"=== electrode minimalism: {args.task}, within-person AUC, "
           f"{args.n_permutations} permutations ===")

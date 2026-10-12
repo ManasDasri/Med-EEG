@@ -51,9 +51,14 @@ def report(title: str, tidy: pd.DataFrame) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bids_root", required=True, type=Path)
+    parser.add_argument("--output_dir", type=Path, default=None,
+                        help="New result directory; defaults to a unique run directory")
     args = parser.parse_args()
 
     paths = Paths.from_root(args.bids_root)
+    from provenance import analysis_output
+    input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
+    output_dir = analysis_output(paths, args, [input_path])
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
         raise SystemExit(f"{feat_path} not found -- run extract_features.py first.")
@@ -114,11 +119,11 @@ def main() -> None:
         tables.append(tidy)
 
     out = pd.concat(tables, ignore_index=True)
-    out.to_csv(paths.derivatives / "lme_followup_results.csv", index=False)
+    out.to_csv(output_dir / "lme_followup_results.csv", index=False)
     (pd.concat(slopes, ignore_index=True) if slopes else
      pd.DataFrame(columns=["subject", "outcome", "ratio_slope"])).sort_values(
         ["outcome", "ratio_slope"]).to_csv(
-        paths.derivatives / "individual_ratio_effects.csv", index=False)
+        output_dir / "individual_ratio_effects.csv", index=False)
     print(f"\n[ok] wrote lme_followup_results.csv and "
           f"individual_ratio_effects.csv to {paths.derivatives}")
     print("These are exploratory: report them as follow-ups, not confirmed "
