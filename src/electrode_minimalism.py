@@ -74,6 +74,9 @@ def curve(X: np.ndarray, y: np.ndarray, subjects: np.ndarray,
     scores = {f"top_{k}": within_person_auc(p[:, None], y, subjects)[0]
               for k, p in loso_top_k(X, y, subjects, ks).items()}
     for name, cols in clusters.items():
+        if not cols:
+            scores[name] = np.nan
+            continue
         cluster_x = X[:, cols].mean(axis=1, keepdims=True)
         p = loso_top_k(cluster_x, y, subjects, [1])[1]
         scores[name] = within_person_auc(p[:, None], y, subjects)[0]
@@ -92,6 +95,8 @@ def main() -> None:
                         help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
+    if args.n_permutations < 0:
+        parser.error("n_permutations must be nonnegative")
     paths = Paths.from_root(args.bids_root, args.derivatives)
     from provenance import analysis_output
     input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
@@ -124,7 +129,7 @@ def main() -> None:
     # only -- the scores above never see the test person during ranking.
     overall = within_person_auc(X, y, subjects)
     ranked = [channels[i] for i in np.argsort(-np.abs(overall - 0.5))]
-    full = real["top_64"] - 0.5
+    full = real[f"top_{max(k for k in N_ELECTRODES if k <= len(channels))}"] - 0.5
     rows = []
     for name, score in real.items():
         n = int(name[4:]) if name.startswith("top_") else len(clusters[name])
@@ -132,8 +137,8 @@ def main() -> None:
             "electrode_set": name,
             "n_electrodes": n,
             "score": score,
-            "chance": null[name].mean(),
-            "p_value": (1 + (null[name] >= score).sum()) / (1 + len(null)),
+            "chance": null[name].mean() if len(null) else np.nan,
+            "p_value": (1 + (null[name] >= score).sum()) / (1 + len(null)) if len(null) and np.isfinite(score) else np.nan,
             "share_of_full_scalp": (score - 0.5) / full if full > 0 else np.nan,
             "electrodes": " ".join(ranked[:n]) if name.startswith("top_")
             else " ".join(PAC_CLUSTERS[name]),
