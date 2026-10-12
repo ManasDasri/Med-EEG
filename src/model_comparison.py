@@ -231,6 +231,7 @@ def evaluate(df: pd.DataFrame, task: str, name: str, features: list[str],
     result.update({
         "ci_low": ci_low, "ci_high": ci_high,
         "n_permutations": n_permutations,
+        "evaluation_scope": "retrospective LOSO; full-recording EEG normalization and preprocessing",
         "null_method": "subject_label_shuffle" if kind == "trait" else "recording_circular_shift",
         "model": name,
         "n_features": len(features),

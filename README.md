@@ -22,8 +22,8 @@ phase-amplitude coupling** at a few frontal-midline electrodes — predict
 moment-to-moment self-reported concentration during meditation nearly as well as
 a black-box model trained on the full 64-channel spectrum?
 
-If yes, a meditation-feedback device doesn't need a deep net or a research cap:
-a 2–4 electrode headband would do.
+This is a retrospective research analysis. Evidence from a few electrodes would
+motivate a prospective headband study; it would not establish live feedback performance.
 
 ---
 
@@ -238,3 +238,13 @@ training folds mean they are not independent-refit confidence bounds. Holm
 adjustment covers every model/baseline tested within each task. Comparing across
 tasks requires a separately declared combined family; the highest observed
 score is descriptive, not an independently validated winning model.
+
+### Retrospective evaluation contract
+
+The held-out person's labels are excluded from model training, but their full
+recording supplies EEG normalization statistics. Filtering and ICA also use the
+continuous recording. These scores apply to retrospective analysis, not causal
+real-time prediction. Prospective validation requires a separate past-only
+preprocessing/calibration protocol, fixed before testing, and forward-time
+evaluation on new recordings. Such a live predictor is outside this repository's
+current claims; the exported evaluation scope makes this distinction explicit.
