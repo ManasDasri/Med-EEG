@@ -114,6 +114,12 @@ def find_eye_components(ica: mne.preprocessing.ICA, raw: mne.io.BaseRaw
                           & (frontal_share >= EOG_MIN_FRONTAL_SHARE)).tolist()
 
 
+def merge_bad_channels(raw, detected):
+    eeg = {raw.ch_names[i] for i in mne.pick_types(raw.info, eeg=True, exclude=[])}
+    known = set(raw.info["bads"])
+    return sorted((known | set(detected)) & eeg), sorted(known - eeg)
+
+
 def ica_decimation(sfreq: float) -> int:
     return max(1, int(sfreq / (2 * BANDPASS_HIGH_HZ * 1.25)))
 
@@ -130,10 +136,12 @@ def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
 
     # Bad channels must be repaired BEFORE average referencing, or one dead
     # or noisy electrode leaks into every other channel through the average.
-    bads = list(mne.preprocessing.find_bad_channels_lof(raw, picks="eeg"))
+    detected = list(mne.preprocessing.find_bad_channels_lof(raw, picks="eeg"))
+    bads, other_bads = merge_bad_channels(raw, detected)
     raw.info["bads"] = bads
     if bads:
         raw.interpolate_bads(reset_bads=True)
+    raw.info["bads"] = other_bads
     raw.set_eeg_reference("average", projection=False)
 
     ica = mne.preprocessing.ICA(n_components=ICA_N_COMPONENTS,
