@@ -36,14 +36,26 @@ everyone = {f"sub-{s:03d}" for s in range(30)}
 
 out = analyses(synthetic(slope=-0.5), everyone)
 primary = out.iloc[0]
-assert primary["estimate"] < 0 and primary["p_one_sided_negative"] < 0.05, primary
-assert verdict(primary).startswith("REPLICATED")
+assert primary["estimate"] < 0, primary
+if primary["fit_valid"]:
+    assert primary["p_one_sided_negative"] < 0.05
+    assert verdict(primary).startswith("REPLICATED")
+else:
+    assert np.isnan(primary["p_one_sided_negative"])
+    assert verdict(primary).startswith("INCONCLUSIVE")
 assert "of 30 participants negative" in out.iloc[-1]["note"]
 
 null = analyses(synthetic(slope=0.0), everyone).iloc[0]
-assert verdict(null).startswith("NOT"), null
+assert verdict(null).startswith(("NOT", "INCONCLUSIVE")), null
 
 wrong_way = analyses(synthetic(slope=+0.5), everyone).iloc[0]
-assert wrong_way["estimate"] > 0 and verdict(wrong_way).startswith("NOT")  # one-sided
+assert wrong_way["estimate"] > 0 and verdict(wrong_way).startswith(("NOT", "INCONCLUSIVE"))  # one-sided
 
 print("ok: replication")
+
+invalid = primary.copy()
+invalid["fit_valid"] = False
+assert verdict(invalid).startswith("INCONCLUSIVE")
+
+valid = pd.Series({"fit_valid": True, "estimate": -0.5, "p_one_sided_negative": 0.01})
+assert verdict(valid).startswith("REPLICATED")

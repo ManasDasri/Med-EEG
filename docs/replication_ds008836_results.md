@@ -1,3 +1,9 @@
+> Audit correction (2026-10-12): the original replication fit did not converge.
+> Its historical p-value and replication verdict below are not validated inference.
+> Reanalysis uses a fixed lbfgs → bfgs → powell numerical fallback, retains diagnostics,
+> and withholds inference unless convergence and covariance checks pass. This is
+> a documented post-registration numerical correction, not a new confirmatory test.
+
 # Results: pre-registered replication on OpenNeuro ds008836
 
 Pre-registration: [`preregistration_ds008836.md`](preregistration_ds008836.md)

@@ -20,6 +20,9 @@ from __future__ import annotations
 
 import argparse
 import sys
+import warnings
+
+import numpy as np
 from pathlib import Path
 
 import pandas as pd
@@ -49,8 +52,39 @@ def fit_lme(df: pd.DataFrame, formula: str, analysis: str,
             re_formula: str | None = None):
     """Fit a random-intercept (optionally random-slope) model per subject.
     Returns (statsmodels result, tidy table of the fixed effects)."""
-    result = smf.mixedlm(formula, df, groups=df["subject"],
-                         re_formula=re_formula).fit(reml=True, method="lbfgs")
+    # Fixed order chosen for numerical validity, never coefficient or p-value.
+    attempts = []
+    result = None
+    valid = False
+    for optimizer in ("lbfgs", "bfgs", "powell"):
+        try:
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                candidate = smf.mixedlm(formula, df, groups=df["subject"],
+                    re_formula=re_formula).fit(reml=True, method=optimizer,
+                                              maxiter=2000)
+            messages = [str(w.message) for w in caught]
+            result = candidate
+            covariance = np.asarray(result.cov_params())
+            valid = bool(result.converged and np.isfinite(covariance).all()
+                         and np.linalg.eigvalsh(covariance).min() > 0
+                         and not any("not positive definite" in m for m in messages))
+            attempts.append({"optimizer": optimizer, "valid": valid,
+                             "warnings": messages})
+            if valid:
+                break
+        except (np.linalg.LinAlgError, ValueError) as exc:
+            attempts.append({"optimizer": optimizer, "valid": False,
+                             "warnings": [str(exc)]})
+    if result is None:
+        raise ValueError(f"All mixed-model fits failed: {attempts}")
+    import json
+    diagnostics = json.dumps(attempts)
+    if not valid:
+        warnings.warn(f"Invalid mixed-model fit; inference withheld: {diagnostics}",
+                      RuntimeWarning)
+    result.audit_valid = valid
+
     ci = result.conf_int()
     terms = [t for t in result.fe_params.index if t != "Intercept"]
     tidy = pd.DataFrame({
@@ -60,7 +94,11 @@ def fit_lme(df: pd.DataFrame, formula: str, analysis: str,
         "coef": result.fe_params[terms].to_numpy(),
         "ci_low": ci.loc[terms, 0].to_numpy(),
         "ci_high": ci.loc[terms, 1].to_numpy(),
-        "p_value": result.pvalues[terms].to_numpy(),
+        "p_value": result.pvalues[terms].to_numpy() if valid else np.nan,
+        "fit_valid": valid,
+        "converged": bool(result.converged),
+        "optimizer": attempts[-1]["optimizer"],
+        "fit_diagnostics": diagnostics,
         "n_obs": int(result.nobs),
         "n_subjects": df["subject"].nunique(),
     })

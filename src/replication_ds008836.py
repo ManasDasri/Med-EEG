@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -40,13 +39,13 @@ def model(df: pd.DataFrame, predictor: str, covariates: str = "") -> dict:
     predictor's coefficient with two- and one-sided (negative) p-values."""
     d = standardise(df, OUTCOME, [predictor])
     d = zscore_within_recording(d, [OUTCOME]).dropna(subset=[OUTCOME])
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        _, tidy = fit_lme(d, f"{OUTCOME} ~ {predictor} + {TIME}{covariates}",
-                          "replication", re_formula=f"~{predictor}")
+    _, tidy = fit_lme(d, f"{OUTCOME} ~ {predictor} + {TIME}{covariates}",
+                      "replication", re_formula=f"~{predictor}")
     row = tidy[tidy["term"] == predictor].iloc[0]
     p = row["p_value"]
-    return {"estimate": row["coef"], "ci_low": row["ci_low"],
+    return {"fit_valid": bool(row["fit_valid"]),
+            "fit_diagnostics": row["fit_diagnostics"],
+            "estimate": row["coef"], "ci_low": row["ci_low"],
             "ci_high": row["ci_high"], "p_two_sided": p,
             "p_one_sided_negative": p / 2 if row["coef"] < 0 else 1 - p / 2,
             "n_reports": len(d), "n_participants": d["subject"].nunique()}
@@ -91,6 +90,8 @@ def analyses(features: pd.DataFrame, in_analysis: set[str]) -> pd.DataFrame:
 
 
 def verdict(primary: pd.Series) -> str:
+    if not primary.get("fit_valid", False) or not np.isfinite(primary["p_one_sided_negative"]):
+        return "INCONCLUSIVE (invalid mixed-model fit; inference withheld)"
     if primary["estimate"] < 0 and primary["p_one_sided_negative"] < ALPHA_ONE_SIDED:
         return "REPLICATED (negative slope, one-sided p < 0.05)"
     return "NOT REPLICATED (pre-registered rule: negative slope with one-sided p < 0.05)"

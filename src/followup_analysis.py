@@ -83,6 +83,9 @@ def main() -> None:
         result, tidy = fit_lme(df, f"{outcome} ~ minimal_ratio + {TIME}",
                                "C_random_slopes", re_formula="~minimal_ratio")
         report(f"C) Person-to-person differences: ratio -> {outcome}", tidy)
+        if not result.audit_valid:
+            tables.append(tidy)
+            continue
         slope_sd = result.cov_re.loc["minimal_ratio", "minimal_ratio"] ** 0.5
         print(f"[interpretation] the ratio's effect varies between people "
               f"with SD {slope_sd:.3f} around the average "
@@ -112,7 +115,8 @@ def main() -> None:
 
     out = pd.concat(tables, ignore_index=True)
     out.to_csv(paths.derivatives / "lme_followup_results.csv", index=False)
-    pd.concat(slopes, ignore_index=True).sort_values(
+    (pd.concat(slopes, ignore_index=True) if slopes else
+     pd.DataFrame(columns=["subject", "outcome", "ratio_slope"])).sort_values(
         ["outcome", "ratio_slope"]).to_csv(
         paths.derivatives / "individual_ratio_effects.csv", index=False)
     print(f"\n[ok] wrote lme_followup_results.csv and "
