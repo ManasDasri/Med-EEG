@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import uuid
 from pathlib import Path
 
 import mne
@@ -270,6 +271,9 @@ def process_recording(raw_path: Path, deriv_dir: Path,
     probes = parse_events(pd.read_csv(events_path, sep="\t"))
     raw = load(raw_path)
     raw, qc = clean_continuous(raw, read_line_freq(raw_path))
+    recording = raw_path.stem.rsplit("_eeg", 1)[0]
+    generation = deriv_dir / "recordings" / recording / uuid.uuid4().hex
+    generation.mkdir(parents=True)
     epochs, planned = epoch_probes(raw, probes)
 
     rows = []
@@ -279,18 +283,19 @@ def process_recording(raw_path: Path, deriv_dir: Path,
                         if epochs is not None else [])
         if len(probe_epochs) == 0:
             continue
-        out_path = deriv_dir / f"{sub}_{ses}_probe-{p.probe_index:02d}-epo.fif"
+        out_path = generation / f"{recording}_probe-{p.probe_index:02d}-epo.fif"
         probe_epochs.save(out_path, overwrite=True)
         rows.append({"subject": sub, "session": ses,
                      **p._asdict(),
-                     "epochs_file": str(out_path),
+                     "recording": recording,
+                     "epochs_file": str(out_path.resolve()),
                      "n_epochs": len(probe_epochs),
                      "n_epochs_rejected": n_planned - len(probe_epochs)})
 
     n_planned_total = int(planned.sum())
     n_kept = sum(r["n_epochs"] for r in rows)
     qc.update({
-        "subject": sub, "session": ses,
+        "subject": sub, "session": ses, "recording": recording,
         "n_probes": len(probes),
         "n_probes_kept": len(rows),
         "n_epochs_kept": n_kept,
@@ -303,6 +308,25 @@ def process_recording(raw_path: Path, deriv_dir: Path,
           f"{qc['n_ica_eog_removed']} eye + {qc['n_ica_muscle_removed']} "
           f"muscle components")
     return rows, qc
+
+
+def atomic_text(path: Path, content: str) -> None:
+    temporary = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
+    try:
+        temporary.write_text(content)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def replace_recording(existing: list[dict], replacement: list[dict], qc: dict) -> list[dict]:
+    def matches(row):
+        identity = row.get("recording")
+        if isinstance(identity, str):
+            return identity == qc["recording"]
+        # Migration for historical manifests containing one recording per session.
+        return row["subject"] == qc["subject"] and row["session"] == qc["session"]
+    return [row for row in existing if not matches(row)] + replacement
 
 
 def main() -> None:
@@ -343,42 +367,37 @@ def main() -> None:
     qc_csv = paths.derivatives / "preprocessing_qc.csv"
     partial = bool(args.subjects or args.limit)
 
-    def rows_to_keep(path: Path) -> list[dict]:
-        """On a partial run, keep earlier results for the subjects NOT being
-        processed, so --subjects adds to / replaces part of the dataset
-        instead of wiping everything else."""
-        if not (partial and path.exists()):
-            return []
-        previous = pd.read_csv(path)
-        return previous[~previous["subject"].isin(subjects)].to_dict("records")
-
-    all_rows: list[dict] = rows_to_keep(out_csv)
-    qc_rows: list[dict] = rows_to_keep(qc_csv)
-    failed: list[str] = []
-
+    # Existing good rows remain until a complete replacement recording succeeds.
+    all_rows = pd.read_csv(out_csv).to_dict("records") if out_csv.exists() else []
+    qc_rows = pd.read_csv(qc_csv).to_dict("records") if qc_csv.exists() else []
+    # Recover aggregate CSVs after a crash between the two atomic replacements.
+    for status in sorted((paths.derivatives / "recordings").glob("*/complete.json")):
+        completed = json.loads(status.read_text())
+        all_rows = replace_recording(all_rows, completed["rows"], completed["qc"])
+        qc_rows = replace_recording(qc_rows, [completed["qc"]], completed["qc"])
+    if all_rows:
+        atomic_text(out_csv, pd.DataFrame(all_rows).to_csv(index=False))
+    if qc_rows:
+        atomic_text(qc_csv, pd.DataFrame(qc_rows).to_csv(index=False))
+    failed = []
     for sub in subjects:
-        recordings = sorted((paths.bids_root / sub).rglob(
-            DATASETS[args.dataset][0]))
+        recordings = sorted((paths.bids_root / sub).rglob(DATASETS[args.dataset][0]))
         if not recordings:
             failed.append(sub)
             print(f"[ERROR] no recording found for {sub}")
         for raw_path in recordings:
             try:
-                rows, qc = process_recording(raw_path, paths.derivatives,
-                                             args.dataset)
-                all_rows.extend(rows)
-                qc_rows.append(qc)
-            except Exception as e:
+                rows, qc = process_recording(raw_path, paths.derivatives, args.dataset)
+                # Publish recording status only after all immutable epoch files exist.
+                status = paths.derivatives / "recordings" / qc["recording"] / "complete.json"
+                atomic_text(status, json.dumps({"rows": rows, "qc": qc}))
+                all_rows = replace_recording(all_rows, rows, qc)
+                qc_rows = replace_recording(qc_rows, [qc], qc)
+                atomic_text(out_csv, pd.DataFrame(all_rows).to_csv(index=False))
+                atomic_text(qc_csv, pd.DataFrame(qc_rows).to_csv(index=False))
+            except Exception as exc:
                 failed.append(raw_path.name)
-                print(f"[ERROR] {raw_path.name} failed and was skipped: "
-                      f"{type(e).__name__}: {e}")
-            finally:
-                # Save after every recording, success or failure, so a crash
-                # on recording N never loses the work done on 1..N-1.
-                if all_rows:
-                    pd.DataFrame(all_rows).to_csv(out_csv, index=False)
-                if qc_rows:
-                    pd.DataFrame(qc_rows).to_csv(qc_csv, index=False)
+                print(f"[ERROR] {raw_path.name}: {type(exc).__name__}: {exc}")
 
     if not all_rows:
         raise SystemExit("[ERROR] no probes were preprocessed -- see errors "
