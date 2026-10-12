@@ -114,6 +114,10 @@ def find_eye_components(ica: mne.preprocessing.ICA, raw: mne.io.BaseRaw
                           & (frontal_share >= EOG_MIN_FRONTAL_SHARE)).tolist()
 
 
+def ica_decimation(sfreq: float) -> int:
+    return max(1, int(sfreq / (2 * BANDPASS_HIGH_HZ * 1.25)))
+
+
 def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
                      ) -> tuple[mne.io.BaseRaw, dict]:
     """Filter, repair bad channels, average-reference, and ICA-clean the whole
@@ -136,8 +140,8 @@ def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
                                 method="fastica",
                                 random_state=ICA_RANDOM_STATE,
                                 max_iter="auto")
-    # decim=5 fits on every 5th sample: same components, ~5x faster.
-    ica.fit(raw, picks="eeg", decim=5)
+    # Keep the fit Nyquist above the passband plus its filter transition.
+    ica.fit(raw, picks="eeg", decim=ica_decimation(raw.info["sfreq"]))
     eog_idx = find_eye_components(ica, raw)
     # Muscle matters most for this project: EMG is broadband and lands right
     # in the 30-45 Hz gamma band the biomarker is built on.
