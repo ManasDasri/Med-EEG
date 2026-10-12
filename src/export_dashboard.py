@@ -78,7 +78,7 @@ def build_subjects_payload(features: pd.DataFrame,
 
     subjects = []
     for sub, g in features.groupby("subject"):
-        probes = g.sort_values("probe_onset_s") if "probe_onset_s" in g else g
+        probes = g.sort_values([c for c in ("recording", "session", "probe_onset_s", "probe_index") if c in g])
         subjects.append({
             "subject": sub,
             "group": g["group"].iloc[0] if "group" in g.columns else None,
@@ -89,10 +89,10 @@ def build_subjects_payload(features: pd.DataFrame,
             "mean_concentration": _safe_mean(g.get("concentration_rating")),
             "mean_mind_wandering": _safe_mean(g.get("mind_wandering_rating")),
             "probes": clean_records(probes[[
-                c for c in ["probe_index", "session", "probe_onset_s",
+                c for c in ["recording", "probe_index", "session", "probe_onset_s",
                             "minimal_ratio", "minimal_pac",
                             "concentration_rating", "mind_wandering_rating",
-                            "tiredness_rating"]
+                            "tiredness_rating", "depth_rating", "block", "block_type", "variant"]
                 if c in probes.columns
             ]]),
         })
