@@ -230,3 +230,11 @@ serial order. It assumes approximate stationarity in probe order, not equal
 clock-time spacing; p-values remain exploratory for irregular/nonstationary
 ratings. This outcome-independent audit change must be distinguished from the
 historical unrestricted-shuffle results.
+
+Model outputs retain predictions for every model, per-person scores, descriptive
+subject-bootstrap intervals and paired EEG-minus-baseline differences. These
+intervals condition on the fitted cross-validation predictions; overlapping
+training folds mean they are not independent-refit confidence bounds. Holm
+adjustment covers every model/baseline tested within each task. Comparing across
+tasks requires a separately declared combined family; the highest observed
+score is descriptive, not an independently validated winning model.
