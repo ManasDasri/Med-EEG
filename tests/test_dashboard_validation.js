@@ -1,0 +1,17 @@
+const assert = require('node:assert/strict');
+const {validateDashboard} = require('../assets/dashboard-validation.js');
+assert.throws(()=>validateDashboard({subjects:'bad'}));
+assert.throws(()=>validateDashboard({subjects:[{subject:'s',probes:[{probe_index:0,minimal_ratio:'bad'}]}]}));
+assert.throws(()=>validateDashboard({subjects:[],tasks:{a:{model_comparison:{}}}}));
+assert.throws(()=>validateDashboard({subjects:[],n_probes:Infinity}));
+assert.equal(validateDashboard({subjects:[]}).n_probes,0);
+const sample = require('../dashboard_data.sample.json');
+assert.equal(validateDashboard(sample).n_subjects,sample.subjects.length);
+console.log('ok: dashboard schema validation');
+const fs=require('node:fs'),Babel=require('../assets/babel.min.js');
+const html=fs.readFileSync(require('node:path').join(__dirname,'../dashboard.html'),'utf8');
+const jsx=html.match(/<script type="text\/babel"[^>]*>([\s\S]*?)<\/script>/)[1];
+Babel.transform(jsx,{presets:['react']});
+assert(!/<script[^>]+src="https?:/.test(html));
+assert(!html.includes('@import url('));
+console.log('ok: JSX compiles and browser dependencies are local');
