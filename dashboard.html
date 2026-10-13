@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeuroDial — meditation EEG biomarker dashboard</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Archivo:wght@400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
   :root{
     --ink:#0B0D10;
@@ -41,9 +41,10 @@
 <body>
 <div id="root"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="assets/react.production.min.js"></script>
+<script src="assets/react-dom.production.min.js"></script>
+<script src="assets/babel.min.js"></script>
+<script src="assets/dashboard-validation.js"></script>
 
 <script type="text/babel" data-presets="react">
 const { useState, useRef, useEffect, useMemo, useLayoutEffect } = React;
@@ -219,7 +220,8 @@ function LineChart({ points, points2, height=240, subjectKey, ratingLabel="conce
   if(!points || !points.length) return <div className="empty">No probe data for this subject.</div>;
 
   const padL = 44, padR = 48, padT = 18, padB = 30;
-  const vals = points.map(p=>p.y).filter(v=>v!=null);
+  const vals = points.map(p=>p.y).filter(Number.isFinite);
+  if(!vals.length) return <div className="empty">No finite signal values in this recording.</div>;
   let yMin = Math.min(...vals), yMax = Math.max(...vals);
   if(yMin===yMax){ yMin-=1; yMax+=1; }
   const yPad = (yMax-yMin)*0.12; yMin -= yPad; yMax += yPad;
@@ -230,10 +232,10 @@ function LineChart({ points, points2, height=240, subjectKey, ratingLabel="conce
   };
 
   const body = width>0 ? (() => {
-    const path1 = points.map((p,i)=>toXY(i,p.y,yMin,yMax,width)).map(([x,y],i)=>(i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)).join(' ');
+    const path1 = points.map((p,i)=>{ if(!Number.isFinite(p.y)) return ''; const [x,y]=toXY(i,p.y,yMin,yMax,width); return (i===0||!Number.isFinite(points[i-1].y)?'M':'L')+x.toFixed(1)+','+y.toFixed(1); }).join(' ');
     let path2pts = null;
     if(points2 && points2.length){
-      path2pts = points2.map((p,i) => { if(p.y==null) return null; const [x,y]=toXY(i,p.y,0,ratingMax,width); return {x,y,i}; }).filter(Boolean);
+      path2pts = points2.map((p,i) => { if(!Number.isFinite(p.y)) return null; const [x,y]=toXY(i,p.y,0,ratingMax,width); return {x,y,i}; });
     }
     const yTicks = [yMin,(yMin+yMax)/2,yMax];
     return (
@@ -245,9 +247,9 @@ function LineChart({ points, points2, height=240, subjectKey, ratingLabel="conce
         <text x={padL} y={padT-5} className="axis-caption axis-caption-theta">γ/θ ratio</text>
         <text x={width-padR} y={padT-5} textAnchor="end" className="axis-caption axis-caption-gamma">{ratingLabel}</text>
         <path key={subjectKey+'-t'} d={path1} className="trace-ratio" />
-        {points.map((p,i) => { const [x,y]=toXY(i,p.y,yMin,yMax,width); return <circle key={i} cx={x} cy={y} r="2.6" className="trace-ratio-dot" style={{animationDelay:(i*30)+'ms'}}/>; })}
-        {path2pts && <polyline key={subjectKey+'-g'} points={path2pts.map(p=>`${p.x},${p.y}`).join(' ')} className="trace-rating" />}
-        {path2pts && path2pts.map(p => <circle key={p.i} cx={p.x} cy={p.y} r="2.6" className="trace-rating-dot" style={{animationDelay:(p.i*30+100)+'ms'}}/>)}
+        {points.map((p,i) => { if(!Number.isFinite(p.y)) return null; const [x,y]=toXY(i,p.y,yMin,yMax,width); return <circle key={i} cx={x} cy={y} r="2.6" className="trace-ratio-dot" style={{animationDelay:(i*30)+'ms'}}/>; })}
+        {path2pts && <path key={subjectKey+'-g'} d={path2pts.map((p,i)=>p?`${i===0||!path2pts[i-1]?"M":"L"}${p.x},${p.y}`:" ").join(" ")} className="trace-rating" />}
+        {path2pts && path2pts.filter(Boolean).map(p => <circle key={p.i} cx={p.x} cy={p.y} r="2.6" className="trace-rating-dot" style={{animationDelay:(p.i*30+100)+'ms'}}/>)}
         {points.map((p,i) => { const [x] = toXY(i,p.y,yMin,yMax,width); return <text key={i} x={x} y={height-8} textAnchor="middle" className="axis-label">{p.x}</text>; })}
       </svg>
     );
@@ -267,7 +269,8 @@ function BarChart({ items, height=220, horizontal=false }){
     return () => clearTimeout(t);
   }, [itemsKey]);
 
-  if(!items || !items.length) return <div className="empty">No data.</div>;
+  items = (items||[]).filter(item=>Number.isFinite(item.value));
+  if(!items.length) return <div className="empty">No finite data.</div>;
   const max = Math.max(...items.map(i=>Math.abs(i.value||0)), 0.001);
 
   const body = width>0 ? (() => {
@@ -279,7 +282,7 @@ function BarChart({ items, height=220, horizontal=false }){
         <svg width={width} height={height} className="barchart-h">
           {items.map((it,i) => {
             const cy = padT + rowH*i + rowH/2;
-            const fullW = scale(Math.abs(it.value), 0, max, 0, width-padL-padR);
+            const fullW = scale(Math.abs(it.value), 0, max, 0, Math.max(0,width-padL-padR));
             const w = grown ? fullW : 0;
             return (
               <g key={it.label}>
@@ -324,6 +327,7 @@ function FileLoader({ onLoad, status }){
   function readFile(file){
     const reader = new FileReader();
     reader.onload = ev => { try{ onLoad(JSON.parse(ev.target.result), file.name); } catch(err){ onLoad(null,null,err.message); } };
+    reader.onerror = () => onLoad(null,null,"The file could not be read.");
     reader.readAsText(file);
   }
   return (
@@ -363,6 +367,7 @@ function App(){
 
   function handleLoad(json, name, err){
     if(err){ setStatus("Couldn't parse that file — " + err); return; }
+    try { json = validateDashboard(json); } catch (error) { setStatus("Couldn’t load that file — " + error.message); return; }
     setRatioRange(json.subjects);
     setData(json);
     setRecording("");

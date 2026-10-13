@@ -73,7 +73,7 @@ Theta–gamma PAC per cluster     Tort MI, bias-corrected + surrogate z-score
 Feature tables                  one row per probe + one row per epoch
     │
 Stats: LME  concentration ~ ratio + PAC + (1 | subject)
-ML:    LOSO-CV, interpretable vs RF vs MLP, SHAP audit
+ML:    subject-wise LOSO-CV, linear and gradient-boosting models, SHAP audit
     │
 dashboard_data.json → dashboard.html
 ```
@@ -147,7 +147,11 @@ for every recording.
 ### Dashboard
 
 Open `dashboard.html` in a browser and load `dashboard_data.json` (or
-`dashboard_data.sample.json` to try it without the dataset). No server needed.
+`dashboard_data.sample.json` to try it without the dataset). Dependencies and fonts are local; a direct file open works offline.
+
+## Historical results (original analysis)
+
+The following values describe the original analysis run and are retained as historical context. They do not use the corrected ICA sampling, recording-preserving nulls, fit-validity checks, or 100-permutation evaluation. See the final corrected-run report linked below before interpreting them.
 
 ## Results (all 24 subjects)
 
