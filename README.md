@@ -190,16 +190,19 @@ chosen each way).
 ### Independent replication (phase 6)
 
 Pre-registered before any EEG was loaded
-([`docs/preregistration_ds008836.md`](docs/preregistration_ds008836.md)), then
-run once on OpenNeuro ds008836 (39 experienced Vipassana meditators, different
+([`docs/preregistration_ds008836.md`](docs/preregistration_ds008836.md)) and
+tested on OpenNeuro ds008836 (39 experienced Vipassana meditators, different
 lab, EEG system and rating scale). The prediction: in experienced
 meditators, a higher gamma/theta ratio at Fz + Pz goes with lower reported
 meditation depth.
 
-**Replicated by the pre-registered rule** (estimate −0.067 within-person SD,
-one-sided p = 0.036), but about a third the size seen here, and fragile:
-two-sided p = 0.072. In ds008836 the effect is carried by **theta rising with
-depth**, not by gamma. Details:
+**Not replicated.** The pre-registered mixed model turned out to be
+unidentifiable, so it never converged; an earlier "replicated" verdict rested
+on that invalid fit and is withdrawn. Under the documented repair
+([amendment](docs/preregistration_ds008836_amendment.md)), the slope is
+negative as predicted (−0.072 within-person SD) but not significant
+(one-sided p = 0.064; per-participant cross-check p = 0.089). Pooling all
+blocks gives p = 0.006 (exploratory). Details:
 [`docs/replication_ds008836_results.md`](docs/replication_ds008836_results.md).
 
 ## Limitations

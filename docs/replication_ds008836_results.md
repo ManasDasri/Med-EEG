@@ -1,16 +1,70 @@
-> Audit correction (2026-10-12): the original replication fit did not converge.
-> Its historical p-value and replication verdict below are not validated inference.
-> Reanalysis uses a fixed lbfgs → bfgs → powell numerical fallback, retains diagnostics,
-> and withholds inference unless convergence and covariance checks pass. This is
-> a documented post-registration numerical correction, not a new confirmatory test.
-
 # Results: pre-registered replication on OpenNeuro ds008836
+
+Pre-registration: [`preregistration_ds008836.md`](preregistration_ds008836.md)
+(commit `280830b`, before any ds008836 EEG was loaded).
+Amendment: [`preregistration_ds008836_amendment.md`](preregistration_ds008836_amendment.md)
+(commit `a099e1d`, before the repaired result was computed).
+
+## Verdict: NOT REPLICATED
+
+The pre-registered mixed model is **unidentifiable** after within-recording
+z-scoring: every recording's mean depth is exactly 0, so the per-participant
+random intercept can't be estimated and no optimizer converges (audit
+finding #1). Amendment 1 replaced it with OLS with participant-clustered
+standard errors, plus a per-participant cross-check, without changing the
+data, predictor, z-scoring or decision rule. Run once on the corrected
+features (after the ICA-sampling fix), commit `5c48b24`:
+
+| | Estimate | 95% CI | one-sided p | Reports | People |
+|---|---|---|---|---|---|
+| **Primary: OLS, participant-clustered SE** | **−0.072** | −0.166 to +0.022 | **0.064** | 830 | 39 |
+| Cross-check: one slope per participant, t-test | −0.074 | −0.184 to +0.036 | 0.089 | | 39 (26 negative) |
+| Original mixed model (for the record) | −0.059 | | invalid fit | 830 | 39 |
+
+Both tests agree: the slope is negative, as predicted, but neither reaches the
+pre-registered one-sided p < 0.05. **By the pre-registered rule, lead 1
+did not replicate.** Units are within-person SD of depth per within-recording
+SD of the ratio; the ds001787 experts showed ≈ −0.21.
+
+## Exploratory analyses (same repaired method)
+
+| | Estimate | 95% CI | p two-sided | p one-sided (neg.) | n |
+|---|---|---|---|---|---|
+| S1 all four blocks (+ block type, variant) | −0.086 | −0.152 to −0.020 | 0.012 | 0.006 | 1707 / 39 |
+| S2 SILENT, prompted reports only | −0.026 | −0.167 to +0.115 | 0.71 | 0.35 | 334 / 38 |
+| S3 gamma power alone | −0.032 | −0.138 to +0.074 | 0.54 | 0.27 | 830 / 39 |
+| S3 theta power alone | +0.083 | −0.006 to +0.172 | 0.068 | — | 830 / 39 |
+| S4 ratio + temple-gamma covariate | −0.069 | −0.162 to +0.025 | 0.15 | 0.074 | 830 / 39 |
+| S5 `in_analysis == yes` only | −0.075 | −0.176 to +0.026 | 0.14 | 0.071 | 776 / 37 |
+| S6 per-person slopes | median −0.090 | | | | 25 of 39 negative |
+
+## Interpretation
+
+- The **direction** holds (negative in every ratio analysis, about two thirds
+  of people negative), but the **evidence is too weak** for the pre-registered
+  test. The likely effect, if real, is about a third the size seen in ds001787.
+- Pooling all four blocks (S1, 1,707 reports) gives p = 0.006. It's
+  exploratory, but it suggests a small effect that this design was
+  under-powered to confirm with the SILENT blocks alone. A new pre-registered
+  test with more reports per person would be the honest next step.
+- The earlier claim that **theta carries the effect** no longer holds up
+  (p = 0.068 with valid inference).
+
+---
+
+## Superseded: the original phase-6 run (invalid inference)
+
+Kept for the record. These numbers came from a mixed model that **never
+converged** (warnings were suppressed), on features computed before the
+ICA-sampling fix. Their p-values and the "REPLICATED" verdict are not valid
+inference.
+
 
 Pre-registration: [`preregistration_ds008836.md`](preregistration_ds008836.md)
 (commit `280830b`, 10:04, before any ds008836 EEG was loaded).
 Analysis run once, after commit `b154f94` (15:43).
 
-## Primary result
+### Original primary result
 
 | | Estimate | 95% CI | one-sided p | Reports | Participants |
 |---|---|---|---|---|---|
@@ -24,7 +78,7 @@ REPLICATED.** The effect is about one third of the size seen in
 ds001787, and the 95% CI just includes zero; a two-sided test (p = 0.072)
 would not pass.
 
-## Exploratory analyses (pre-registration §6)
+### Original exploratory analyses
 
 | | Estimate | 95% CI | p two-sided | p one-sided (neg.) | n |
 |---|---|---|---|---|---|
@@ -36,7 +90,7 @@ would not pass.
 | S5 `in_analysis == yes` only | −0.069 | −0.144 to +0.006 | 0.070 | 0.035 | 776 / 37 |
 | S6 per-person slopes | median −0.083 | | | | 25 of 39 negative |
 
-## Interpretation
+### Original interpretation
 
 - The **direction** of the pre-registered prediction holds in an independent
   dataset: different lab, country, meditation tradition (Vipassana), EEG
@@ -54,7 +108,7 @@ would not pass.
   experienced meditators, weakly, across two datasets; which band drives it
   is not consistent between them.*
 
-## Data quality
+### Data quality
 
 78 recordings, all preprocessed without errors; median epoch rejection 0.4%;
 median 7 bad channels per recording (more than ds001787's 2, all repaired by
@@ -62,7 +116,7 @@ interpolation). One recording excluded by the pre-set rule (sub-029 ses-2,
 28 of 64 channels bad). 834 SILENT reports; 4 dropped by within-recording
 z-scoring (recordings where every depth rating was identical).
 
-## Changes after pre-registration
+### Changes after pre-registration (original run)
 
 All were outcome-independent bug fixes, made before the analysis was run,
 as allowed by §7:
