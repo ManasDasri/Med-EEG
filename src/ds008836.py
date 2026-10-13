@@ -73,7 +73,7 @@ def parse_reports(events_df: pd.DataFrame) -> pd.DataFrame:
             end = before.max()
             used.add(end)  # claimed even if the rating is dropped below
             depth = pd.to_numeric(ev.at[i, "depth"], errors="coerce")
-            if np.isnan(depth) or depth == 0:
+            if not np.isfinite(depth) or depth < 1:
                 continue
             earlier = ratings[ratings < end]
             start = max(end - LOOKBACK_S, starts.iloc[0],

@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import uuid
 from pathlib import Path
 
 import mne
@@ -113,6 +114,16 @@ def find_eye_components(ica: mne.preprocessing.ICA, raw: mne.io.BaseRaw
                           & (frontal_share >= EOG_MIN_FRONTAL_SHARE)).tolist()
 
 
+def merge_bad_channels(raw, detected):
+    eeg = {raw.ch_names[i] for i in mne.pick_types(raw.info, eeg=True, exclude=[])}
+    known = set(raw.info["bads"])
+    return sorted((known | set(detected)) & eeg), sorted(known - eeg)
+
+
+def ica_decimation(sfreq: float) -> int:
+    return max(1, int(sfreq / (2 * BANDPASS_HIGH_HZ * 1.25)))
+
+
 def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
                      ) -> tuple[mne.io.BaseRaw, dict]:
     """Filter, repair bad channels, average-reference, and ICA-clean the whole
@@ -125,18 +136,20 @@ def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
 
     # Bad channels must be repaired BEFORE average referencing, or one dead
     # or noisy electrode leaks into every other channel through the average.
-    bads = list(mne.preprocessing.find_bad_channels_lof(raw, picks="eeg"))
+    detected = list(mne.preprocessing.find_bad_channels_lof(raw, picks="eeg"))
+    bads, other_bads = merge_bad_channels(raw, detected)
     raw.info["bads"] = bads
     if bads:
         raw.interpolate_bads(reset_bads=True)
+    raw.info["bads"] = other_bads
     raw.set_eeg_reference("average", projection=False)
 
     ica = mne.preprocessing.ICA(n_components=ICA_N_COMPONENTS,
                                 method="fastica",
                                 random_state=ICA_RANDOM_STATE,
                                 max_iter="auto")
-    # decim=5 fits on every 5th sample: same components, ~5x faster.
-    ica.fit(raw, picks="eeg", decim=5)
+    # Keep the fit Nyquist above the passband plus its filter transition.
+    ica.fit(raw, picks="eeg", decim=ica_decimation(raw.info["sfreq"]))
     eog_idx = find_eye_components(ica, raw)
     # Muscle matters most for this project: EMG is broadband and lands right
     # in the 30-45 Hz gamma band the biomarker is built on.
@@ -146,6 +159,7 @@ def clean_continuous(raw: mne.io.BaseRaw, line_freq: float
 
     return raw, {
         "line_freq_hz": line_freq,
+        "n_eeg_channels": len(mne.pick_types(raw.info, eeg=True, exclude=[])),
         "n_bad_channels": len(bads),
         "bad_channels": ";".join(bads),
         "n_ica_eog_removed": len(eog_idx),
@@ -270,6 +284,9 @@ def process_recording(raw_path: Path, deriv_dir: Path,
     probes = parse_events(pd.read_csv(events_path, sep="\t"))
     raw = load(raw_path)
     raw, qc = clean_continuous(raw, read_line_freq(raw_path))
+    recording = raw_path.stem.rsplit("_eeg", 1)[0]
+    generation = deriv_dir / "recordings" / recording / uuid.uuid4().hex
+    generation.mkdir(parents=True)
     epochs, planned = epoch_probes(raw, probes)
 
     rows = []
@@ -279,18 +296,19 @@ def process_recording(raw_path: Path, deriv_dir: Path,
                         if epochs is not None else [])
         if len(probe_epochs) == 0:
             continue
-        out_path = deriv_dir / f"{sub}_{ses}_probe-{p.probe_index:02d}-epo.fif"
+        out_path = generation / f"{recording}_probe-{p.probe_index:02d}-epo.fif"
         probe_epochs.save(out_path, overwrite=True)
         rows.append({"subject": sub, "session": ses,
                      **p._asdict(),
-                     "epochs_file": str(out_path),
+                     "recording": recording,
+                     "epochs_file": str(out_path.resolve()),
                      "n_epochs": len(probe_epochs),
                      "n_epochs_rejected": n_planned - len(probe_epochs)})
 
     n_planned_total = int(planned.sum())
     n_kept = sum(r["n_epochs"] for r in rows)
     qc.update({
-        "subject": sub, "session": ses,
+        "subject": sub, "session": ses, "recording": recording,
         "n_probes": len(probes),
         "n_probes_kept": len(rows),
         "n_epochs_kept": n_kept,
@@ -303,6 +321,25 @@ def process_recording(raw_path: Path, deriv_dir: Path,
           f"{qc['n_ica_eog_removed']} eye + {qc['n_ica_muscle_removed']} "
           f"muscle components")
     return rows, qc
+
+
+def atomic_text(path: Path, content: str) -> None:
+    temporary = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
+    try:
+        temporary.write_text(content)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def replace_recording(existing: list[dict], replacement: list[dict], qc: dict) -> list[dict]:
+    def matches(row):
+        identity = row.get("recording")
+        if isinstance(identity, str):
+            return identity == qc["recording"]
+        # Migration for historical manifests containing one recording per session.
+        return row["subject"] == qc["subject"] and row["session"] == qc["session"]
+    return [row for row in existing if not matches(row)] + replacement
 
 
 def main() -> None:
@@ -320,9 +357,11 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None,
                         help="Only process the first N subjects found -- "
                              "another quick way to test on a subset.")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
     subjects = sorted(p.name for p in paths.bids_root.glob("sub-*")
                       if p.is_dir())
 
@@ -341,41 +380,37 @@ def main() -> None:
     qc_csv = paths.derivatives / "preprocessing_qc.csv"
     partial = bool(args.subjects or args.limit)
 
-    def rows_to_keep(path: Path) -> list[dict]:
-        """On a partial run, keep earlier results for the subjects NOT being
-        processed, so --subjects adds to / replaces part of the dataset
-        instead of wiping everything else."""
-        if not (partial and path.exists()):
-            return []
-        previous = pd.read_csv(path)
-        return previous[~previous["subject"].isin(subjects)].to_dict("records")
-
-    all_rows: list[dict] = rows_to_keep(out_csv)
-    qc_rows: list[dict] = rows_to_keep(qc_csv)
-    failed: list[str] = []
-
+    # Existing good rows remain until a complete replacement recording succeeds.
+    all_rows = pd.read_csv(out_csv).to_dict("records") if out_csv.exists() else []
+    qc_rows = pd.read_csv(qc_csv).to_dict("records") if qc_csv.exists() else []
+    # Recover aggregate CSVs after a crash between the two atomic replacements.
+    for status in sorted((paths.derivatives / "recordings").glob("*/complete.json")):
+        completed = json.loads(status.read_text())
+        all_rows = replace_recording(all_rows, completed["rows"], completed["qc"])
+        qc_rows = replace_recording(qc_rows, [completed["qc"]], completed["qc"])
+    if all_rows:
+        atomic_text(out_csv, pd.DataFrame(all_rows).to_csv(index=False))
+    if qc_rows:
+        atomic_text(qc_csv, pd.DataFrame(qc_rows).to_csv(index=False))
+    failed = []
     for sub in subjects:
-        recordings = sorted((paths.bids_root / sub).rglob(
-            DATASETS[args.dataset][0]))
+        recordings = sorted((paths.bids_root / sub).rglob(DATASETS[args.dataset][0]))
         if not recordings:
-            print(f"[skip] no recording found for {sub}")
+            failed.append(sub)
+            print(f"[ERROR] no recording found for {sub}")
         for raw_path in recordings:
             try:
-                rows, qc = process_recording(raw_path, paths.derivatives,
-                                             args.dataset)
-                all_rows.extend(rows)
-                qc_rows.append(qc)
-            except Exception as e:
+                rows, qc = process_recording(raw_path, paths.derivatives, args.dataset)
+                # Publish recording status only after all immutable epoch files exist.
+                status = paths.derivatives / "recordings" / qc["recording"] / "complete.json"
+                atomic_text(status, json.dumps({"rows": rows, "qc": qc}))
+                all_rows = replace_recording(all_rows, rows, qc)
+                qc_rows = replace_recording(qc_rows, [qc], qc)
+                atomic_text(out_csv, pd.DataFrame(all_rows).to_csv(index=False))
+                atomic_text(qc_csv, pd.DataFrame(qc_rows).to_csv(index=False))
+            except Exception as exc:
                 failed.append(raw_path.name)
-                print(f"[ERROR] {raw_path.name} failed and was skipped: "
-                      f"{type(e).__name__}: {e}")
-            finally:
-                # Save after every recording, success or failure, so a crash
-                # on recording N never loses the work done on 1..N-1.
-                if all_rows:
-                    pd.DataFrame(all_rows).to_csv(out_csv, index=False)
-                if qc_rows:
-                    pd.DataFrame(qc_rows).to_csv(qc_csv, index=False)
+                print(f"[ERROR] {raw_path.name}: {type(exc).__name__}: {exc}")
 
     if not all_rows:
         raise SystemExit("[ERROR] no probes were preprocessed -- see errors "
@@ -386,6 +421,8 @@ def main() -> None:
     if failed:
         print(f"[warn] {len(failed)} recording(s) failed: {failed} -- "
               f"re-run just those with --subjects once fixed")
+    if failed:
+        raise SystemExit(1)
     n_nan = (manifest["concentration_rating"].isna().sum()
              if "concentration_rating" in manifest else 0)
     if n_nan:

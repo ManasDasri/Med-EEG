@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeuroDial — meditation EEG biomarker dashboard</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Archivo:wght@400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
   :root{
     --ink:#0B0D10;
@@ -41,9 +41,10 @@
 <body>
 <div id="root"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="assets/react.production.min.js"></script>
+<script src="assets/react-dom.production.min.js"></script>
+<script src="assets/babel.min.js"></script>
+<script src="assets/dashboard-validation.js"></script>
 
 <script type="text/babel" data-presets="react">
 const { useState, useRef, useEffect, useMemo, useLayoutEffect } = React;
@@ -214,12 +215,13 @@ function TabBar({ tabs, active, onChange }){
 }
 
 /* ============================= animated SVG line chart ============================= */
-function LineChart({ points, points2, height=240, subjectKey }){
+function LineChart({ points, points2, height=240, subjectKey, ratingLabel="concentration", ratingMax=3 }){
   const [wrapRef, width] = useMeasuredWidth();
   if(!points || !points.length) return <div className="empty">No probe data for this subject.</div>;
 
   const padL = 44, padR = 48, padT = 18, padB = 30;
-  const vals = points.map(p=>p.y).filter(v=>v!=null);
+  const vals = points.map(p=>p.y).filter(Number.isFinite);
+  if(!vals.length) return <div className="empty">No finite signal values in this recording.</div>;
   let yMin = Math.min(...vals), yMax = Math.max(...vals);
   if(yMin===yMax){ yMin-=1; yMax+=1; }
   const yPad = (yMax-yMin)*0.12; yMin -= yPad; yMax += yPad;
@@ -230,24 +232,24 @@ function LineChart({ points, points2, height=240, subjectKey }){
   };
 
   const body = width>0 ? (() => {
-    const path1 = points.map((p,i)=>toXY(i,p.y,yMin,yMax,width)).map(([x,y],i)=>(i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)).join(' ');
+    const path1 = points.map((p,i)=>{ if(!Number.isFinite(p.y)) return ''; const [x,y]=toXY(i,p.y,yMin,yMax,width); return (i===0||!Number.isFinite(points[i-1].y)?'M':'L')+x.toFixed(1)+','+y.toFixed(1); }).join(' ');
     let path2pts = null;
     if(points2 && points2.length){
-      path2pts = points2.map((p,i) => { if(p.y==null) return null; const [x,y]=toXY(i,p.y,0,3,width); return {x,y,i}; }).filter(Boolean);
+      path2pts = points2.map((p,i) => { if(!Number.isFinite(p.y)) return null; const [x,y]=toXY(i,p.y,0,ratingMax,width); return {x,y,i}; });
     }
     const yTicks = [yMin,(yMin+yMax)/2,yMax];
     return (
       <svg width={width} height={height} className="linechart">
         {yTicks.map((tval,idx) => { const y = scale(tval,yMin,yMax,height-padB,padT);
           return <g key={idx}><line x1={padL} x2={width-padR} y1={y} y2={y} className="gridline"/><text x={padL-8} y={y+3} textAnchor="end" className="axis-label">{tval.toFixed(1)}</text></g>; })}
-        {[0,1,2,3].map(tv => { const y = scale(tv,0,3,height-padB,padT);
+        {Array.from({length:ratingMax+1},(_,i)=>i).map(tv => { const y = scale(tv,0,ratingMax,height-padB,padT);
           return <text key={tv} x={width-padR+8} y={y+3} className="axis-label axis-label-r">{tv}</text>; })}
         <text x={padL} y={padT-5} className="axis-caption axis-caption-theta">γ/θ ratio</text>
-        <text x={width-padR} y={padT-5} textAnchor="end" className="axis-caption axis-caption-gamma">concentration</text>
+        <text x={width-padR} y={padT-5} textAnchor="end" className="axis-caption axis-caption-gamma">{ratingLabel}</text>
         <path key={subjectKey+'-t'} d={path1} className="trace-ratio" />
-        {points.map((p,i) => { const [x,y]=toXY(i,p.y,yMin,yMax,width); return <circle key={i} cx={x} cy={y} r="2.6" className="trace-ratio-dot" style={{animationDelay:(i*30)+'ms'}}/>; })}
-        {path2pts && <polyline key={subjectKey+'-g'} points={path2pts.map(p=>`${p.x},${p.y}`).join(' ')} className="trace-rating" />}
-        {path2pts && path2pts.map(p => <circle key={p.i} cx={p.x} cy={p.y} r="2.6" className="trace-rating-dot" style={{animationDelay:(p.i*30+100)+'ms'}}/>)}
+        {points.map((p,i) => { if(!Number.isFinite(p.y)) return null; const [x,y]=toXY(i,p.y,yMin,yMax,width); return <circle key={i} cx={x} cy={y} r="2.6" className="trace-ratio-dot" style={{animationDelay:(i*30)+'ms'}}/>; })}
+        {path2pts && <path key={subjectKey+'-g'} d={path2pts.map((p,i)=>p?`${i===0||!path2pts[i-1]?"M":"L"}${p.x},${p.y}`:" ").join(" ")} className="trace-rating" />}
+        {path2pts && path2pts.filter(Boolean).map(p => <circle key={p.i} cx={p.x} cy={p.y} r="2.6" className="trace-rating-dot" style={{animationDelay:(p.i*30+100)+'ms'}}/>)}
         {points.map((p,i) => { const [x] = toXY(i,p.y,yMin,yMax,width); return <text key={i} x={x} y={height-8} textAnchor="middle" className="axis-label">{p.x}</text>; })}
       </svg>
     );
@@ -267,7 +269,8 @@ function BarChart({ items, height=220, horizontal=false }){
     return () => clearTimeout(t);
   }, [itemsKey]);
 
-  if(!items || !items.length) return <div className="empty">No data.</div>;
+  items = (items||[]).filter(item=>Number.isFinite(item.value));
+  if(!items.length) return <div className="empty">No finite data.</div>;
   const max = Math.max(...items.map(i=>Math.abs(i.value||0)), 0.001);
 
   const body = width>0 ? (() => {
@@ -279,7 +282,7 @@ function BarChart({ items, height=220, horizontal=false }){
         <svg width={width} height={height} className="barchart-h">
           {items.map((it,i) => {
             const cy = padT + rowH*i + rowH/2;
-            const fullW = scale(Math.abs(it.value), 0, max, 0, width-padL-padR);
+            const fullW = scale(Math.abs(it.value), 0, max, 0, Math.max(0,width-padL-padR));
             const w = grown ? fullW : 0;
             return (
               <g key={it.label}>
@@ -324,6 +327,7 @@ function FileLoader({ onLoad, status }){
   function readFile(file){
     const reader = new FileReader();
     reader.onload = ev => { try{ onLoad(JSON.parse(ev.target.result), file.name); } catch(err){ onLoad(null,null,err.message); } };
+    reader.onerror = () => onLoad(null,null,"The file could not be read.");
     reader.readAsText(file);
   }
   return (
@@ -346,16 +350,28 @@ function FileLoader({ onLoad, status }){
 }
 
 /* ============================= app ============================= */
+function ResultTable({rows}){
+  if(!rows?.length) return <div className="empty">No results in this run.</div>;
+  const columns = [...new Set(rows.flatMap(r=>Object.keys(r)))].filter(k=>!['fit_diagnostics','electrodes'].includes(k));
+  return <div className="card table-card" style={{overflowX:'auto'}}><table><thead><tr>{columns.map(k=><th key={k}>{k.replaceAll('_',' ')}</th>)}</tr></thead>
+    <tbody>{rows.map((r,i)=><tr key={i}>{columns.map(k=><td key={k}>{typeof r[k]==='number'?fmt(r[k],4):r[k]==null?'—':String(r[k])}</td>)}</tr>)}</tbody></table></div>;
+}
+
 function App(){
   const [data, setData] = useState(null);
   const [status, setStatus] = useState('No session loaded yet.');
   const [subject, setSubject] = useState(null);
+  const [taskChoice, setTaskChoice] = useState("");
+  const [recording, setRecording] = useState("");
   const [tab, setTab] = useState('explorer');
 
   function handleLoad(json, name, err){
     if(err){ setStatus("Couldn't parse that file — " + err); return; }
+    try { json = validateDashboard(json); } catch (error) { setStatus("Couldn’t load that file — " + error.message); return; }
     setRatioRange(json.subjects);
     setData(json);
+    setRecording("");
+    setTaskChoice("");
     setStatus('Loaded ' + name + ' — ' + (json.n_subjects ?? '?') + ' subjects.');
     if(json.subjects && json.subjects.length) setSubject(json.subjects[0].subject);
   }
@@ -366,15 +382,26 @@ function App(){
     return rs.length ? rs.reduce((a,b)=>a+b,0)/rs.length : null;
   }, [data]);
 
+  const availableTasks = Object.keys(data?.tasks||{});
+  const activeTask = availableTasks.includes(taskChoice) ? taskChoice : availableTasks[0] || data?.model_task;
+  const taskResults = data?.tasks?.[activeTask] || data;
+
   const modelGap = useMemo(() => {
     if(!data) return null;
-    const mc = data.model_comparison || [];
+    const mc = taskResults?.model_comparison || [];
     const interp = mc.find(m=>m.model==='interpretable_ratio_pac');
     const best = mc.find(m=>m.model==='boosting_spectral');
     return (interp && best) ? best.score - interp.score : null;
-  }, [data]);
+  }, [data, activeTask]);
 
   const currentSubject = useMemo(() => (data?.subjects||[]).find(s=>s.subject===subject), [data, subject]);
+
+  const recordingKey = p => p.recording || p.session || 'unknown';
+  const recordings = [...new Set((currentSubject?.probes||[]).map(recordingKey))];
+  const selectedRecording = recordings.includes(recording) ? recording : recordings[0];
+  const sessionProbes = (currentSubject?.probes||[]).filter(p=>recordingKey(p)===selectedRecording)
+    .sort((a,b)=>(a.probe_onset_s??a.probe_index)-(b.probe_onset_s??b.probe_index));
+  const isDepth = sessionProbes.some(p=>p.depth_rating!=null);
 
   const kpiSubjects = useCountUp(data ? data.n_subjects : null, 700);
   const kpiProbes = useCountUp(data ? data.n_probes : null, 900);
@@ -386,6 +413,7 @@ function App(){
     ['models','Model shootout'],
     ['electrodes','Electrode minimalism'],
     ['shap','SHAP audit'],
+    ['statistics','Statistical analyses'],
   ];
 
   return (
@@ -412,7 +440,7 @@ function App(){
             {data && (data.subjects||[]).map((s) => (
               <div key={s.subject}
                    className={"subject-row" + (s.subject===subject?" active":"")}
-                   onClick={()=>setSubject(s.subject)}>
+                   onClick={()=>{setSubject(s.subject); setRecording("");}}>
                 <span>{s.subject}</span>
                 {s.group && <span className={"pill " + (String(s.group).toLowerCase().includes('exp')?"pill-gamma":"pill-theta")}>{s.group}</span>}
               </div>
@@ -432,31 +460,35 @@ function App(){
           <div className="kpi"><div className="kpi-val">{data ? Math.round(kpiSubjects) : '—'}</div><div className="kpi-lbl">Subjects</div></div>
           <div className="kpi"><div className="kpi-val">{data ? Math.round(kpiProbes) : '—'}</div><div className="kpi-lbl">Probe epochs</div></div>
           <div className="kpi"><div className="kpi-val">{fmt(meanRatio)}</div><div className="kpi-lbl">Mean γ/θ ratio</div></div>
-          <div className="kpi"><div className="kpi-val">{modelGap!=null ? fmt(kpiGap,3) : '—'}</div><div className="kpi-lbl">Interpretable vs. black-box gap</div></div>
+          <div className="kpi"><div className="kpi-val">{modelGap!=null ? fmt(kpiGap,3) : '—'}</div><div className="kpi-lbl">Boosting minus interpretable score</div></div>
         </div>
 
+        {availableTasks.length>0 && <label style={{display:'block',padding:'12px 36px'}}>Analysis task <select aria-label="Analysis task" value={activeTask} onChange={e=>setTaskChoice(e.target.value)}>{availableTasks.map(t=><option key={t}>{t}</option>)}</select></label>}
         <TabBar tabs={TABS} active={tab} onChange={setTab} />
 
         {tab==='explorer' && (
           <section className="panel">
-            <h2>Per-subject probe trace</h2>
-            <p className="desc">Gamma/theta ratio (solid line) against self-reported concentration rating (dashed line) at each probe in this subject's session.</p>
+            <h2>Per-recording probe trace</h2>
+            <label>Recording <select aria-label="Recording" value={selectedRecording||''} onChange={e=>setRecording(e.target.value)}>
+              {recordings.map(r=><option key={r} value={r}>{r}</option>)}
+            </select></label>
+            <p className="desc">Gamma/theta ratio (solid line) against self-reported rating (dashed line) at each probe in this subject's session.</p>
             <div className="card">
               {currentSubject
-                ? <LineChart subjectKey={currentSubject.subject}
-                    points={(currentSubject.probes||[]).map(p=>({x:p.probe_index,y:p.minimal_ratio}))}
-                    points2={(currentSubject.probes||[]).map(p=>({x:p.probe_index,y:p.concentration_rating}))} />
+                ? <LineChart subjectKey={currentSubject.subject+selectedRecording} ratingLabel={isDepth?"depth":"concentration"} ratingMax={isDepth?5:3}
+                    points={sessionProbes.map(p=>({x:p.probe_index,y:p.minimal_ratio}))}
+                    points2={sessionProbes.map(p=>({x:p.probe_index,y:isDepth?p.depth_rating:p.concentration_rating}))} />
                 : <div className="empty">No subject selected.</div>}
             </div>
             <div className="card table-card">
               <table>
-                <thead><tr><th>Probe</th><th>Session</th><th>Ratio</th><th>PAC</th><th>Conc.</th><th>MW</th><th>Tired</th></tr></thead>
+                <thead><tr><th>Probe</th><th>Session</th><th>Ratio</th><th>PAC</th><th>Conc.</th><th>MW</th><th>Tired</th><th>Depth</th><th>Block</th></tr></thead>
                 <tbody>
-                  {(currentSubject?.probes||[]).map(p => (
-                    <tr key={p.probe_index}>
+                  {sessionProbes.map(p => (
+                    <tr key={recordingKey(p)+":"+p.probe_index}>
                       <td>{p.probe_index}</td><td>{p.session}</td>
                       <td>{fmt(p.minimal_ratio)}</td><td>{fmt(p.minimal_pac,3)}</td>
-                      <td>{fmt(p.concentration_rating,0)}</td><td>{fmt(p.mind_wandering_rating,0)}</td><td>{fmt(p.tiredness_rating,0)}</td>
+                      <td>{fmt(p.concentration_rating,0)}</td><td>{fmt(p.mind_wandering_rating,0)}</td><td>{fmt(p.tiredness_rating,0)}</td><td>{fmt(p.depth_rating,0)}</td><td>{p.block||"—"}</td>
                     </tr>
                   ))}
                   {!currentSubject && <tr><td colSpan="7" className="empty">—</td></tr>}
@@ -493,9 +525,10 @@ function App(){
         {tab==='models' && (
           <section className="panel">
             <h2>Interpretable vs black-box shootout</h2>
-            <p className="desc">Leave-one-subject-out score{data?.model_task ? ` for ${data.model_task}` : ''}: the 2-feature ratio+PAC model against linear and gradient-boosting models on all regional spectral features. Each model's chance level and p-value come from shuffled-label runs in model_comparison_*.csv. A small gap supports the project's core hypothesis.</p>
+            <ResultTable rows={taskResults?.model_comparison} />
+            <p className="desc">Leave-one-subject-out score{activeTask ? ` for ${activeTask}` : ''}: the 2-feature ratio+PAC model against linear and gradient-boosting models on all regional spectral features. Each model's chance level and p-value come from shuffled-label runs in model_comparison_*.csv. A small gap alone does not establish useful prediction: compare both models with chance and non-EEG baselines. Results below include uncertainty and fit validity where available.</p>
             <div className="card">
-              <BarChart horizontal items={(data?.model_comparison||[]).map((m,i)=>({label:NICE_MODEL_NAMES[m.model]||m.model, value:m.score, cls:i===0?'bar-theta':'bar-neutral'}))} />
+              <BarChart horizontal items={(taskResults?.model_comparison||[]).map((m,i)=>({label:NICE_MODEL_NAMES[m.model]||m.model, value:m.score, cls:i===0?'bar-theta':'bar-neutral'}))} />
             </div>
           </section>
         )}
@@ -503,18 +536,23 @@ function App(){
         {tab==='electrodes' && (
           <section className="panel">
             <h2>How few electrodes can we get away with?</h2>
-            <p className="desc">Within-person AUC of the gamma/theta ratio{data?.model_task ? ` for ${data.model_task}` : ''} using the best 1, 2, 4 … 64 electrodes (chosen on the training people only) and the three predefined clusters. 0.5 = chance; each row's chance level and p-value are in electrode_minimalism_*.csv.</p>
-            <div className="card"><BarChart items={(data?.electrode_minimalism||[]).map(e=>({label: e.electrode_set.startsWith('top_') ? `best ${e.n_electrodes}` : ({frontal_theta:'Fz FCz Cz', posterior_gamma:'Pz POz Oz', minimal:'Fz Pz'}[e.electrode_set] || e.electrode_set), value:e.score, cls:'bar-gamma'}))} /></div>
+            <ResultTable rows={taskResults?.electrode_minimalism} />
+            <p className="desc">Within-person AUC of the gamma/theta ratio{activeTask ? ` for ${activeTask}` : ''} using the best 1, 2, 4 … 64 electrodes (chosen on the training people only) and the three predefined clusters. 0.5 = chance; each row's chance level and p-value are in electrode_minimalism_*.csv.</p>
+            <div className="card"><BarChart items={(taskResults?.electrode_minimalism||[]).map(e=>({label: e.electrode_set.startsWith('top_') ? `best ${e.n_electrodes}` : ({frontal_theta:'Fz FCz Cz', posterior_gamma:'Pz POz Oz', minimal:'Fz Pz'}[e.electrode_set] || e.electrode_set), value:e.score, cls:'bar-gamma'}))} /></div>
           </section>
         )}
 
         {tab==='shap' && (
           <section className="panel">
             <h2>Is the black-box model actually using theta/gamma?</h2>
-            <p className="desc">SHAP feature importance for the Random Forest model — sanity check that it leans on the bands this project is testing, not an artifact.</p>
-            <div className="card"><BarChart horizontal items={[...(data?.shap_importance||[])].sort((a,b)=>b.importance-a.importance).map(s=>({label:s.feature, value:s.importance, cls:'bar-neutral'}))} /></div>
+            <p className="desc">In-sample SHAP for the gradient-boosting model fitted to all available data. These are descriptive training-data explanations, not held-out evidence of generalization.</p>
+            <div className="card"><BarChart horizontal items={[...(taskResults?.shap_importance||[])].sort((a,b)=>b.importance-a.importance).map(s=>({label:s.feature, value:s.importance, cls:'bar-neutral'}))} /></div>
           </section>
         )}
+        {tab==='statistics' && <section className="panel"><h2>Statistical analyses</h2>
+          <p>Only the prespecified primary replication tests the registered hypothesis. Follow-ups and robustness analyses are exploratory. Invalid fits withhold inference.</p>
+          {Object.entries(data?.statistics||{}).map(([name,rows])=><div key={name}><h3>{name.replaceAll('_',' ')}</h3><ResultTable rows={rows}/></div>)}
+        </section>}
       </main>
     </div>
   );

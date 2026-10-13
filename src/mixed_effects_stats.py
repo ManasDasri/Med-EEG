@@ -108,9 +108,16 @@ def fit_lme(df: pd.DataFrame, formula: str, analysis: str,
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bids_root", required=True, type=Path)
+    parser.add_argument("--output_dir", type=Path, default=None,
+                        help="New result directory; defaults to a unique run directory")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
+    from provenance import analysis_output
+    input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
+    output_dir = analysis_output(paths, args, [input_path])
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
         raise SystemExit(f"{feat_path} not found -- run extract_features.py first.")
@@ -130,7 +137,7 @@ def main() -> None:
               f"change per 1 SD within-session change.")
 
     out = pd.concat(tables, ignore_index=True)
-    out_path = paths.derivatives / "lme_results.csv"
+    out_path = output_dir / "lme_results.csv"
     out.to_csv(out_path, index=False)
     print(f"\n[ok] wrote {out_path}")
 

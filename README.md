@@ -22,8 +22,8 @@ phase-amplitude coupling** at a few frontal-midline electrodes — predict
 moment-to-moment self-reported concentration during meditation nearly as well as
 a black-box model trained on the full 64-channel spectrum?
 
-If yes, a meditation-feedback device doesn't need a deep net or a research cap:
-a 2–4 electrode headband would do.
+This is a retrospective research analysis. Evidence from a few electrodes would
+motivate a prospective headband study; it would not establish live feedback performance.
 
 ---
 
@@ -73,7 +73,7 @@ Theta–gamma PAC per cluster     Tort MI, bias-corrected + surrogate z-score
 Feature tables                  one row per probe + one row per epoch
     │
 Stats: LME  concentration ~ ratio + PAC + (1 | subject)
-ML:    LOSO-CV, interpretable vs RF vs MLP, SHAP audit
+ML:    subject-wise LOSO-CV, linear and gradient-boosting models, SHAP audit
     │
 dashboard_data.json → dashboard.html
 ```
@@ -104,7 +104,7 @@ tests/
   test_replication.py           pre-registered decision rule
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
-knn_prototype.py          original single-file KNN prototype
+knn_prototype.py          retirement notice for the invalid historical prototype
 requirements.txt
 ```
 
@@ -114,7 +114,7 @@ requirements.txt
 git clone https://github.com/ManasDasri/Med-EEG.git
 cd Med-EEG
 python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements.txt -c constraints.txt
 
 # download the dataset (~6 GB)
 openneuro-py download --dataset ds001787 --target_dir data/ds001787
@@ -147,7 +147,11 @@ for every recording.
 ### Dashboard
 
 Open `dashboard.html` in a browser and load `dashboard_data.json` (or
-`dashboard_data.sample.json` to try it without the dataset). No server needed.
+`dashboard_data.sample.json` to try it without the dataset). Dependencies and fonts are local; a direct file open works offline.
+
+## Historical results (original analysis)
+
+The following values describe the original analysis run and are retained as historical context. They do not use the corrected ICA sampling, recording-preserving nulls, fit-validity checks, or 100-permutation evaluation. See the final corrected-run report linked below before interpreting them.
 
 ## Results (all 24 subjects)
 
@@ -158,9 +162,9 @@ results, leaving 23 people and 929 probes.
 
 | Question | Best EEG result | Non-EEG baseline | Verdict |
 |---|---|---|---|
-| Expert vs novice | 78.3% of people (18/23), p = 0.012 | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
+| Expert vs novice | 78.3% of people (18/23), historical p unverified | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
 | Concentration, moment to moment | within-person AUC 0.54 (n.s.) | time-on-task: 0.56 | No signal |
-| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), p = 0.004; one electrode (AF8) alone: 0.63 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the single-electrode result does not replicate across sessions |
+| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), historical p unverified; one electrode (AF8) alone: 0.63 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the single-electrode result does not replicate across sessions |
 
 With 24 people, a model with **no signal** reaches ≥ 70% accuracy about 8% of
 the time, so a bare accuracy figure without a chance level means little. Full
@@ -217,3 +221,60 @@ If you use the dataset, cite the original authors:
 ## License
 
 [MIT](LICENSE)
+
+Analysis commands write a new `derivatives/neurodial/runs/` directory by default.
+Use `--output_dir RUN_DIR` to collect distinct analysis stages in one run; repeating
+a stage in that directory is rejected. Export with `--results_dir RUN_DIR`. Each
+stage records its input hash, code revision, arguments and package versions.
+Historical headline p-values require regeneration from a preserved run.
+
+State-task nulls now circularly shift ratings within each recording; trait labels
+remain shuffled between people. This preserves session membership and circular
+serial order. It assumes approximate stationarity in probe order, not equal
+clock-time spacing; p-values remain exploratory for irregular/nonstationary
+ratings. This outcome-independent audit change must be distinguished from the
+historical unrestricted-shuffle results.
+
+Model outputs retain predictions for every model, per-person scores, descriptive
+subject-bootstrap intervals and paired EEG-minus-baseline differences. These
+intervals condition on the fitted cross-validation predictions; overlapping
+training folds mean they are not independent-refit confidence bounds. Holm
+adjustment covers every model/baseline tested within each task. Comparing across
+tasks requires a separately declared combined family; the highest observed
+score is descriptive, not an independently validated winning model.
+
+### Retrospective evaluation contract
+
+The held-out person's labels are excluded from model training, but their full
+recording supplies EEG normalization statistics. Filtering and ICA also use the
+continuous recording. These scores apply to retrospective analysis, not causal
+real-time prediction. Prospective validation requires a separate past-only
+preprocessing/calibration protocol, fixed before testing, and forward-time
+evaluation on new recordings. Such a live predictor is outside this repository's
+current claims; the exported evaluation scope makes this distinction explicit.
+
+SHAP tables describe the gradient-boosting model fitted on the full dataset and
+are explicitly marked `in_sample_full_dataset`. They do not explain held-out
+predictions or independently establish generalization.
+
+### Portable run workflow
+
+Use Python 3.14 with `requirements.txt` and the tested `constraints.txt`. From
+a fresh clone, the maintained downloader and pipeline are in `scripts/`:
+
+```bash
+python scripts/download_dataset.py --dataset ds001787 --bids_root ../ds001787
+python scripts/run_pipeline.py --dataset ds001787 --bids_root ../ds001787 --run_dir ../runs/discovery-001 --n_permutations 100
+python scripts/run_pipeline.py --dataset ds008836 --bids_root ../ds008836 --run_dir ../runs/replication-001 --stages preprocess,features,stats,export
+python scripts/run_tests.py
+```
+
+Each run owns its intermediate directory, logs, result tables and completion
+markers. For analysis of existing corrected intermediates, pass `--derivatives
+PATH --stages models,stats,export`. A named run refuses completed stages; choose
+a new directory for a new experiment. Legacy shell entry points live in
+`scripts/` and accept `EEG_PYTHON` / `EEG_BIDS_ROOT`; they no longer watch log
+text or mark failed subjects as complete. Keep raw EEG and large generated
+derivatives outside Git, and preserve selected small result summaries/manifests
+with the research report. Downloads use complete pinned object manifests;
+ETags pin object identity, and multipart ETags are not represented as MD5 hashes.

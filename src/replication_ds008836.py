@@ -100,16 +100,23 @@ def verdict(primary: pd.Series) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bids_root", required=True, type=Path)
+    parser.add_argument("--output_dir", type=Path, default=None,
+                        help="New result directory; defaults to a unique run directory")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
+    from provenance import analysis_output
+    input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
+    output_dir = analysis_output(paths, args, [input_path])
     features = pd.read_parquet(paths.derivatives / "features.parquet")
     participants = pd.read_csv(paths.bids_root / "participants.tsv", sep="\t")
     in_analysis = set(participants.loc[participants["in_analysis"] == "yes",
                                        "participant_id"])
 
     out = analyses(features, in_analysis)
-    out.to_csv(paths.derivatives / "replication_results.csv", index=False)
+    out.to_csv(output_dir / "replication_results.csv", index=False)
     with pd.option_context("display.width", 200):
         print(out.round(4).to_string(index=False))
     print(f"\nds001787 experts (reference): -0.12 per SD of ratio in rating "

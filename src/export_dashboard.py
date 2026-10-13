@@ -78,7 +78,7 @@ def build_subjects_payload(features: pd.DataFrame,
 
     subjects = []
     for sub, g in features.groupby("subject"):
-        probes = g.sort_values("probe_onset_s") if "probe_onset_s" in g else g
+        probes = g.sort_values([c for c in ("recording", "session", "probe_onset_s", "probe_index") if c in g])
         subjects.append({
             "subject": sub,
             "group": g["group"].iloc[0] if "group" in g.columns else None,
@@ -89,10 +89,10 @@ def build_subjects_payload(features: pd.DataFrame,
             "mean_concentration": _safe_mean(g.get("concentration_rating")),
             "mean_mind_wandering": _safe_mean(g.get("mind_wandering_rating")),
             "probes": clean_records(probes[[
-                c for c in ["probe_index", "session", "probe_onset_s",
+                c for c in ["recording", "probe_index", "session", "probe_onset_s",
                             "minimal_ratio", "minimal_pac",
                             "concentration_rating", "mind_wandering_rating",
-                            "tiredness_rating"]
+                            "tiredness_rating", "depth_rating", "block", "block_type", "variant"]
                 if c in probes.columns
             ]]),
         })
@@ -134,9 +134,12 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=None,
                          help="Output JSON path (default: "
                               "derivatives/dashboard_data.json)")
+    parser.add_argument("--results_dir", type=Path, default=None)
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    paths = Paths.from_root(args.bids_root, args.derivatives)
     feat_path = paths.derivatives / "features.parquet"
     if not feat_path.exists():
         raise SystemExit(f"{feat_path} not found -- run extract_features.py "
@@ -150,23 +153,41 @@ def main() -> None:
         print("[warn] no participants.tsv found -- group/age/gender and "
               "the group-comparison panel will be empty in the dashboard.")
 
+    results_dir = args.results_dir or paths.derivatives
+
     # model_comparison.py writes one file per task. The dashboard headlines
     # the first task found, in this order (concentration is the project's
     # core question).
     tasks = ["concentration", "expertise", "mind_wandering"]
-    task = next((t for t in tasks if (paths.derivatives /
+    task = next((t for t in tasks if (results_dir /
                  f"model_comparison_{t}.csv").exists()), None)
     model_comparison = safe_read_csv(
-        paths.derivatives / f"model_comparison_{task}.csv") if task else None
+        results_dir / f"model_comparison_{task}.csv") if task else None
     electrode_curve = safe_read_csv(
-        paths.derivatives / f"electrode_minimalism_{task}.csv") if task else None
-    shap_path = paths.derivatives / f"shap_importance_{task}.csv"
+        results_dir / f"electrode_minimalism_{task}.csv") if task else None
+    shap_path = results_dir / f"shap_importance_{task}.csv"
     shap_df = None
     if task and shap_path.exists():
         shap_df = pd.read_csv(shap_path)
-        shap_df.columns = ["feature", "importance"]
+        if not {"feature", "importance"}.issubset(shap_df):
+            raise ValueError("SHAP table lacks feature/importance columns")
+
+    def records(name):
+        path = results_dir / name
+        return clean_records(pd.read_csv(path)) if path.exists() else []
+
+    task_results = {t: {"model_comparison": records(f"model_comparison_{t}.csv"),
+                        "electrode_minimalism": records(f"electrode_minimalism_{t}.csv"),
+                        "shap_importance": records(f"shap_importance_{t}.csv")}
+                    for t in tasks if any((results_dir / f"{prefix}_{t}.csv").exists()
+                        for prefix in ("model_comparison", "electrode_minimalism", "shap_importance"))}
+    statistics = {name: records(name + ".csv") for name in
+                  ("lme_results", "lme_followup_results", "robustness_checks", "replication_results")}
 
     payload = {
+        "schema_version": 2,
+        "tasks": task_results,
+        "statistics": statistics,
         "generated_at": pd.Timestamp.now().isoformat(),
         "model_task": task,
         "n_subjects": int(features["subject"].nunique()),
@@ -181,7 +202,7 @@ def main() -> None:
                            if shap_df is not None else [],
     }
 
-    out_path = args.out or (paths.derivatives / "dashboard_data.json")
+    out_path = args.out or (results_dir / "dashboard_data.json")
     out_path.write_text(json.dumps(_sanitize_for_json(payload), indent=2,
                                     allow_nan=False))
     print(f"[ok] wrote {out_path}")

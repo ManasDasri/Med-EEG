@@ -49,3 +49,15 @@ assert parse_probes(events.sample(frac=1, random_state=0)).equals(
     p.reset_index())
 
 print("ok: parse_probes")
+
+from preprocess import ica_decimation
+assert ica_decimation(256) == 2
+assert 256 / ica_decimation(256) / 2 > 45 * 1.25
+assert ica_decimation(128) == 1
+
+import mne
+import numpy as np
+from preprocess import merge_bad_channels
+raw = mne.io.RawArray(np.zeros((3, 256)), mne.create_info(["Fz", "Pz", "PPG"], 256, ["eeg", "eeg", "misc"]))
+raw.info["bads"] = ["Fz", "PPG"]
+assert merge_bad_channels(raw, ["Pz"]) == (["Fz", "Pz"], ["PPG"])

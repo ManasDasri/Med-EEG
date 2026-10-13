@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import N_PERMUTATIONS, RANDOM_STATE, Paths  # noqa: E402
 from electrode_minimalism import within_person_auc  # noqa: E402
 from mixed_effects_stats import TIME, fit_lme, standardise  # noqa: E402
-from model_comparison import prepare, zscore_within_recording  # noqa: E402
+from model_comparison import prepare, shuffled_target, zscore_within_recording  # noqa: E402
 
 OUTCOME = "concentration_rating"
 FIRST_SESSION = "ses-01"
@@ -116,8 +116,8 @@ def lead_2(features: pd.DataFrame, n_permutations: int) -> list[dict]:
         score = within_person_auc(x_test, y[test], subjects[test])[0]
         null = []
         for _ in range(n_permutations):
-            y_perm = pd.Series(y[test]).groupby(subjects[test]).transform(
-                lambda r: rng.permutation(r.to_numpy())).to_numpy()
+            y_perm = shuffled_target(df.loc[test], "mind_wandering_rating",
+                                     "state", rng).to_numpy()
             null.append(within_person_auc(x_test, y_perm, subjects[test])[0])
         rows.append({
             "check": f"2e best electrode, chosen {label}",
@@ -133,14 +133,23 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bids_root", required=True, type=Path)
     parser.add_argument("--n_permutations", type=int, default=N_PERMUTATIONS)
+    parser.add_argument("--output_dir", type=Path, default=None,
+                        help="New result directory; defaults to a unique run directory")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    if args.n_permutations < 0:
+        parser.error("n_permutations must be nonnegative")
+    paths = Paths.from_root(args.bids_root, args.derivatives)
+    from provenance import analysis_output
+    input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
+    output_dir = analysis_output(paths, args, [input_path])
     features = pd.read_parquet(paths.derivatives / "features.parquet")
     out = pd.DataFrame(lead_1(features) + lead_2(features, args.n_permutations))
     cols = ["check", "estimate", "ci_low", "ci_high", "p_value", "n_subjects", "fit_valid", "fit_diagnostics", "note"]
     out = out.reindex(columns=cols)
-    out.to_csv(paths.derivatives / "robustness_checks.csv", index=False)
+    out.to_csv(output_dir / "robustness_checks.csv", index=False)
     with pd.option_context("display.width", 200, "display.max_colwidth", 70):
         print(out.round(4).to_string(index=False))
     print(f"\n[ok] wrote {paths.derivatives / 'robustness_checks.csv'}")

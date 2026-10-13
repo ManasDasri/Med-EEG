@@ -29,7 +29,7 @@ from scipy.stats import rankdata
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import N_PERMUTATIONS, PAC_CLUSTERS, RANDOM_STATE, Paths  # noqa: E402
-from model_comparison import TASKS, prepare, zscore_within_recording  # noqa: E402
+from model_comparison import TASKS, prepare, shuffled_target, zscore_within_recording  # noqa: E402
 
 N_ELECTRODES = [1, 2, 4, 8, 16, 32, 64]
 
@@ -74,6 +74,9 @@ def curve(X: np.ndarray, y: np.ndarray, subjects: np.ndarray,
     scores = {f"top_{k}": within_person_auc(p[:, None], y, subjects)[0]
               for k, p in loso_top_k(X, y, subjects, ks).items()}
     for name, cols in clusters.items():
+        if not cols:
+            scores[name] = np.nan
+            continue
         cluster_x = X[:, cols].mean(axis=1, keepdims=True)
         p = loso_top_k(cluster_x, y, subjects, [1])[1]
         scores[name] = within_person_auc(p[:, None], y, subjects)[0]
@@ -86,9 +89,18 @@ def main() -> None:
     parser.add_argument("--task", choices=[t for t, (_, kind) in TASKS.items()
                                            if kind == "state"], required=True)
     parser.add_argument("--n_permutations", type=int, default=N_PERMUTATIONS)
+    parser.add_argument("--output_dir", type=Path, default=None,
+                        help="New result directory; defaults to a unique run directory")
+    parser.add_argument("--derivatives", type=Path, default=None,
+                        help="Explicit intermediate directory (preserve prior runs)")
     args = parser.parse_args()
 
-    paths = Paths.from_root(args.bids_root)
+    if args.n_permutations < 0:
+        parser.error("n_permutations must be nonnegative")
+    paths = Paths.from_root(args.bids_root, args.derivatives)
+    from provenance import analysis_output
+    input_path = getattr(args, "features", None) or paths.derivatives / "features.parquet"
+    output_dir = analysis_output(paths, args, [input_path])
     df = prepare(pd.read_parquet(paths.derivatives / "features.parquet"),
                  args.task)
     channels = [c[len("ratio_"):] for c in df.columns if c.startswith("ratio_")]
@@ -106,8 +118,7 @@ def main() -> None:
 
     def shuffled(seed: int) -> dict[str, float]:
         rng = np.random.default_rng(seed)
-        y_perm = pd.Series(y).groupby(subjects).transform(
-            lambda r: rng.permutation(r.to_numpy())).to_numpy()
+        y_perm = shuffled_target(df, TASKS[args.task][0], "state", rng).to_numpy()
         return curve(X, y_perm, subjects, clusters)
 
     null = pd.DataFrame(Parallel(n_jobs=-1)(
@@ -117,7 +128,7 @@ def main() -> None:
     # only -- the scores above never see the test person during ranking.
     overall = within_person_auc(X, y, subjects)
     ranked = [channels[i] for i in np.argsort(-np.abs(overall - 0.5))]
-    full = real["top_64"] - 0.5
+    full = real[f"top_{max(k for k in N_ELECTRODES if k <= len(channels))}"] - 0.5
     rows = []
     for name, score in real.items():
         n = int(name[4:]) if name.startswith("top_") else len(clusters[name])
@@ -125,14 +136,14 @@ def main() -> None:
             "electrode_set": name,
             "n_electrodes": n,
             "score": score,
-            "chance": null[name].mean(),
-            "p_value": (1 + (null[name] >= score).sum()) / (1 + len(null)),
+            "chance": null[name].mean() if len(null) else np.nan,
+            "p_value": (1 + (null[name] >= score).sum()) / (1 + len(null)) if len(null) and np.isfinite(score) else np.nan,
             "share_of_full_scalp": (score - 0.5) / full if full > 0 else np.nan,
             "electrodes": " ".join(ranked[:n]) if name.startswith("top_")
             else " ".join(PAC_CLUSTERS[name]),
         })
     out = pd.DataFrame(rows)
-    out_path = paths.derivatives / f"electrode_minimalism_{args.task}.csv"
+    out_path = output_dir / f"electrode_minimalism_{args.task}.csv"
     out.to_csv(out_path, index=False)
     print(f"=== electrode minimalism: {args.task}, within-person AUC, "
           f"{args.n_permutations} permutations ===")
