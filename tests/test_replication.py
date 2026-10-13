@@ -34,28 +34,34 @@ def synthetic(slope: float) -> pd.DataFrame:
 
 everyone = {f"sub-{s:03d}" for s in range(30)}
 
-out = analyses(synthetic(slope=-0.5), everyone)
-primary = out.iloc[0]
-assert primary["estimate"] < 0, primary
-if primary["fit_valid"]:
-    assert primary["p_one_sided_negative"] < 0.05
-    assert verdict(primary).startswith("REPLICATED")
-else:
-    assert np.isnan(primary["p_one_sided_negative"])
-    assert verdict(primary).startswith("INCONCLUSIVE")
+def run(slope: float) -> tuple[pd.Series, pd.Series, pd.DataFrame]:
+    out = analyses(synthetic(slope=slope), everyone)
+    return out.iloc[0], out.iloc[1], out
+
+
+# Planted negative slope: the repaired primary test is valid, significant,
+# and the per-participant cross-check agrees -> replicated.
+primary, cross, out = run(-0.5)
+assert primary["fit_valid"] and primary["estimate"] < 0, primary
+assert primary["p_one_sided_negative"] < 0.05 and cross["p_one_sided_negative"] < 0.05
+assert verdict(primary, cross).startswith("REPLICATED")
 assert "of 30 participants negative" in out.iloc[-1]["note"]
+# The original pre-registered mixed model is still reported, labelled as such.
+assert out.iloc[2]["method"] == "mixed model as pre-registered"
 
-null = analyses(synthetic(slope=0.0), everyone).iloc[0]
-assert verdict(null).startswith(("NOT", "INCONCLUSIVE")), null
+# No signal, or the wrong direction: never replicated (one-sided test).
+for slope in (0.0, +0.5):
+    primary, cross, _ = run(slope)
+    assert not verdict(primary, cross).startswith("REPLICATED"), (slope, primary)
 
-wrong_way = analyses(synthetic(slope=+0.5), everyone).iloc[0]
-assert wrong_way["estimate"] > 0 and verdict(wrong_way).startswith(("NOT", "INCONCLUSIVE"))  # one-sided
+# Decision rule: disagreement -> inconclusive; invalid fit -> inconclusive.
+ok = pd.Series({"fit_valid": True, "estimate": -0.5, "p_one_sided_negative": 0.01})
+no = pd.Series({"fit_valid": True, "estimate": -0.1, "p_one_sided_negative": 0.30})
+assert verdict(ok, ok).startswith("REPLICATED")
+assert verdict(ok, no).startswith("INCONCLUSIVE")
+assert verdict(no, ok).startswith("INCONCLUSIVE")
+assert verdict(no, no).startswith("NOT")
+bad = ok.copy(); bad["fit_valid"] = False
+assert verdict(bad, ok).startswith("INCONCLUSIVE")
 
 print("ok: replication")
-
-invalid = primary.copy()
-invalid["fit_valid"] = False
-assert verdict(invalid).startswith("INCONCLUSIVE")
-
-valid = pd.Series({"fit_valid": True, "estimate": -0.5, "p_one_sided_negative": 0.01})
-assert verdict(valid).startswith("REPLICATED")
