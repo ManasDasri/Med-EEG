@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import PROBE_EVENT_KEYWORDS, Paths  # noqa: E402
+from config import (ASYMMETRY_PAIR, BIOSEMI64_TO_1020, PAC_CLUSTERS, REGIONS)  # noqa: E402
 
 
 def find_subjects(bids_root: Path) -> list[str]:
@@ -35,45 +35,58 @@ def inspect_participants_tsv(bids_root: Path) -> pd.DataFrame | None:
     return df
 
 
-def inspect_events(bids_root: Path, subjects: list[str]) -> None:
-    print("\n--- scanning *_events.tsv for probe/rating trial_type values ---")
-    seen_types: set[str] = set()
-    n_events_files = 0
+def event_inventory(events: pd.DataFrame, dataset: str) -> dict:
+    if dataset == "ds001787":
+        required = {"trial_type", "value"}
+        if not required.issubset(events.columns):
+            raise ValueError(f"events missing columns: {required - set(events.columns)}")
+        values = pd.to_numeric(events["value"], errors="coerce")
+        probe_count = int((events["trial_type"].astype(str).str.lower().eq("stimulus") & values.eq(128)).sum())
+        return {"probes": probe_count, "event_types": sorted(events.trial_type.dropna().astype(str).unique())}
+    required = {"trial_type", "depth"}
+    if not required.issubset(events.columns):
+        raise ValueError(f"events missing columns: {required - set(events.columns)}")
+    types = events["trial_type"].astype(str)
+    return {"probes": int(types.eq("depth_rating").sum()),
+            "report_markers": int(types.isin(["prompt_window_begin", "report_window_begin"]).sum()),
+            "event_types": sorted(events.trial_type.dropna().astype(str).unique())}
+
+
+def inspect_events(bids_root: Path, subjects: list[str], dataset: str) -> None:
+    print("\n--- checking the dataset-specific probe event codes ---")
+    total, files, seen = 0, 0, set()
     for sub in subjects:
-        for events_file in (bids_root / sub).rglob("*_events.tsv"):
-            n_events_files += 1
-            df = pd.read_csv(events_file, sep="\t")
-            if "trial_type" in df.columns:
-                seen_types.update(df["trial_type"].dropna().unique().tolist())
-    print(f"[ok] found {n_events_files} events.tsv files across "
-          f"{len(subjects)} subjects")
-    print(f"[ok] unique trial_type values seen: {sorted(seen_types)}")
+        for path in (bids_root / sub).rglob("*_events.tsv"):
+            inventory = event_inventory(pd.read_csv(path, sep="\t"), dataset)
+            files += 1
+            total += inventory["probes"]
+            seen.update(inventory["event_types"])
+    print(f"[ok] {files} event files; {total} probe/rating events")
+    print(f"[ok] event types: {sorted(seen)}")
+    if total == 0:
+        raise ValueError("No expected dataset-specific probe/rating events found")
 
-    probe_like = [t for t in seen_types
-                  if any(k in str(t).lower() for k in PROBE_EVENT_KEYWORDS)]
-    if probe_like:
-        print(f"[ok] probe-like event labels: {probe_like}")
+
+def inspect_channels(bids_root: Path, subjects: list[str], dataset: str) -> None:
+    if not subjects: return
+    files = list((bids_root / subjects[0]).rglob("*_channels.tsv"))
+    if not files:
+        print(f"[warn] no *_channels.tsv found for {subjects[0]}")
+        return
+    channels = pd.read_csv(files[0], sep="\t")
+    names = set(channels.name.astype(str))
+    if dataset == "ds001787":
+        names = {BIOSEMI64_TO_1020.get(name, name) for name in names}
+        expected = set().union(*REGIONS.values(), *PAC_CLUSTERS.values(), set(ASYMMETRY_PAIR))
     else:
-        print("[action needed] none of the trial_type values obviously "
-              "match probe/concentration/rating keywords. Open one "
-              "*_events.tsv by hand and update PROBE_EVENT_KEYWORDS in "
-              "config.py, or hardcode the exact label(s) used for the "
-              "3 self-report probes in preprocess.py.")
-
-
-def inspect_channels(bids_root: Path, subjects: list[str]) -> None:
-    if not subjects:
-        return
-    sample = subjects[0]
-    ch_files = list((bids_root / sample).rglob("*_channels.tsv"))
-    if not ch_files:
-        print(f"[warn] no *_channels.tsv found for {sample}")
-        return
-    df = pd.read_csv(ch_files[0], sep="\t")
-    print(f"\n--- channel names for {sample} ({ch_files[0].name}) ---")
-    print(df["name"].tolist() if "name" in df.columns else df.iloc[:, 0].tolist())
-    print("[action needed] confirm FRONTAL_MIDLINE_THETA_CHS / "
-          "POSTERIOR_GAMMA_CHS in config.py exist under these exact names.")
+        names = set(channels.loc[channels.type == "EEG", "name"].astype(str))
+        expected = set().union(*PAC_CLUSTERS.values())
+    missing = sorted(expected - names)
+    print(f"[ok] checked channel names for {files[0].name}")
+    if missing:
+        print(f"[warn] expected analysis electrodes not present: {missing}")
+    else:
+        print("[ok] analysis electrodes are present")
 
 
 def main() -> None:
@@ -83,6 +96,7 @@ def main() -> None:
                               "meditation_experiment folder")
     parser.add_argument("--derivatives", type=Path, default=None,
                         help="Explicit intermediate directory (preserve prior runs)")
+    parser.add_argument("--dataset", choices=["ds001787", "ds008836"], default="ds001787")
     args = parser.parse_args()
 
     if not args.bids_root.exists():
@@ -91,22 +105,19 @@ def main() -> None:
             f"(see README.md) -- it's several GB, this script won't fetch "
             f"it for you.")
 
-    paths = Paths.from_root(args.bids_root, args.derivatives)
-    subjects = find_subjects(paths.bids_root)
+    bids_root = args.bids_root
+    subjects = find_subjects(bids_root)
     print(f"[ok] found {len(subjects)} subjects: {subjects}")
     if len(subjects) != 24:
         print(f"[warn] expected 24 subjects for this dataset, found "
               f"{len(subjects)} -- double check bids_root points at the "
               f"dataset top level.")
 
-    inspect_participants_tsv(paths.bids_root)
-    inspect_events(paths.bids_root, subjects)
-    inspect_channels(paths.bids_root, subjects)
+    inspect_participants_tsv(bids_root)
+    inspect_events(bids_root, subjects, args.dataset)
+    inspect_channels(bids_root, subjects, args.dataset)
 
-    print("\nDone. Resolve any [action needed] items above before running "
-          "preprocess.py -- this dataset has gone through a couple of "
-          "BIDS re-exports over the years and exact event/channel naming "
-          "can differ by download source (Zenodo vs OpenNeuro vs version).")
+    print("\nDone. Resolve any warnings before processing this dataset.")
 
 
 if __name__ == "__main__":
