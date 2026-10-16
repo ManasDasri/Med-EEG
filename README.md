@@ -1,13 +1,12 @@
-> Audit correction (2026-10-12): the original replication fit did not converge.
-> Its historical p-value and replication verdict below are not validated inference.
-> Reanalysis uses a fixed lbfgs → bfgs → powell numerical fallback, retains diagnostics,
-> and withholds inference unless convergence and covariance checks pass. This is
-> a documented post-registration numerical correction, not a new confirmatory test.
-
 # Med-EEG — NeuroDial
 
 **Interpretable gamma/theta EEG biomarkers for meditation depth**
 
+**Live results dashboard: [www.algorithmicbit.tech/neurodial](https://www.algorithmicbit.tech/neurodial/)**.
+It loads [`results/latest/results.json`](results/latest/results.json) from this repository
+on every visit, so it always shows the latest published run (see *Publishing results* below).
+
+[![Dashboard](https://img.shields.io/badge/dashboard-live-0ca30c)](https://www.algorithmicbit.tech/neurodial/)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![MNE](https://img.shields.io/badge/MNE--Python-1.7%2B-1f77b4)](https://mne.tools/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
@@ -160,16 +159,23 @@ runs (chance level, p-value) **and with non-EEG baselines**. One subject
 (sub-010, poor electrode contact) is excluded by a rule set before any
 results, leaving 23 people and 929 probes.
 
+Published run: corrected features (after the ICA-sampling fix), 200
+permutations per model, p-values Holm-corrected across all models and
+baselines within each task. Same numbers as the dashboard.
+
 | Question | Best EEG result | Non-EEG baseline | Verdict |
 |---|---|---|---|
-| Expert vs novice | 78.3% of people (18/23), historical p unverified | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
-| Concentration, moment to moment | within-person AUC 0.54 (n.s.) | time-on-task: 0.56 | No signal |
-| Mind wandering, moment to moment | within-person AUC 0.59 (gamma/theta ratio), historical p unverified; one electrode (AF8) alone: 0.63 | time-on-task: 0.53 | Weak; borderline after multiple-comparison correction; the single-electrode result does not replicate across sessions |
+| Expert vs novice | 78.3% of people (18/23); p = 0.025, corrected 0.10 | **sex alone: 82.6%** | Not supported: experts are 9/11 male, novices 10/12 female, and the model mostly detects sex |
+| Concentration, moment to moment | within-person AUC 0.529; corrected p = 0.64 | **time-on-task: 0.561** | No signal |
+| Mind wandering, moment to moment | within-person AUC 0.587 (γ/θ ratio + PAC); p = 0.015, corrected 0.060 | time-on-task: 0.533 | Weak, just short of significance after correction; the single-electrode result does not replicate across sessions |
 
 With 24 people, a model with **no signal** reaches ≥ 70% accuracy about 8% of
 the time, so a bare accuracy figure without a chance level means little. Full
 analysis: the phase 3 breakdown, and `model_comparison_<task>.csv` in the
 derivatives folder.
+
+*The phase 4–5 numbers below were computed before the ICA-sampling fix and
+have not been re-run on the corrected features yet.*
 
 Further within-person analyses (mixed models, phase 4): concentration rises
 over a session (p = 0.0005) and slow-wave power tracks drowsiness (lower
@@ -204,6 +210,22 @@ negative as predicted (−0.072 within-person SD) but not significant
 (one-sided p = 0.064; per-participant cross-check p = 0.089). Pooling all
 blocks gives p = 0.006 (exploratory). Details:
 [`docs/replication_ds008836_results.md`](docs/replication_ds008836_results.md).
+
+## Publishing results
+
+After a new analysis run, bundle it and push. The dashboard picks it up within
+a few minutes, with no change to the site:
+
+```bash
+python src/publish_results.py \
+    --models_run <model_comparison run dir> --replication_run <replication run dir> \
+    --qc ds001787=<preprocessing_qc.csv> --qc ds008836=<preprocessing_qc.csv>
+git add results/latest/results.json && git commit -m "Publish results" && git push
+```
+
+The bundle holds only summary tables (scores, chance levels, p-values,
+per-person scores, the replication table, QC summaries) and each source run's
+provenance. Dashboard source: [ManasDasri/neurodial](https://github.com/ManasDasri/neurodial).
 
 ## Limitations
 
