@@ -67,4 +67,23 @@ stacked = spectral_features(np.stack([psd, psd * 3]), freqs, CHANNELS)
 assert stacked["scalp_alpha_power"].shape == (2,)
 assert np.allclose(stacked["frontal_alpha_rel"], f["frontal_alpha_rel"])
 
+# --- Spectrum shape: 1/f exponent and individual alpha peak -------------------
+from extract_features import covariance_features, spectrum_shape  # noqa: E402
+f = np.arange(1.0, 45.5, 0.5)
+background = f ** -1.5
+bump = 1 + 3 * np.exp(-0.5 * ((f - 10.0) / 1.0) ** 2)
+exp_, iaf, height = spectrum_shape(np.stack([background * bump, background]), f)
+assert abs(exp_[0] - 1.5) < 0.05 and abs(exp_[1] - 1.5) < 1e-9, exp_
+assert iaf[0] == 10.0 and height[0] > 0.4, (iaf, height)   # log10(4) ~ 0.6
+assert abs(height[1]) < 1e-9                                # no peak, no height
+
+# --- Covariance features: one column per channel pair, matches the data ---------
+names = ["Fz", "Cz", "Pz"]
+data = rng.standard_normal((20, 3, 512)) * np.array([1.0, 2.0, 3.0])[None, :, None]
+data[:, 1] += 0.8 * data[:, 0]
+cov = covariance_features(mne.EpochsArray(data * 1e-6, mne.create_info(names, SFREQ, "eeg")))
+assert len(cov) == 6 and "cov__Fz__Cz" in cov and "cov__Pz__Pz" in cov
+assert cov["cov__Pz__Pz"] > cov["cov__Cz__Cz"] > cov["cov__Fz__Fz"] > 0
+assert cov["cov__Fz__Cz"] > 0 and abs(cov["cov__Fz__Pz"]) < 0.1 * cov["cov__Fz__Fz"]
+
 print("ok: extract_features")

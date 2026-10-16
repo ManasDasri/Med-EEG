@@ -40,7 +40,7 @@ from joblib import Parallel, delayed
 from sklearn.ensemble import (HistGradientBoostingClassifier,
                               HistGradientBoostingRegressor)
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.linear_model import LogisticRegression, Ridge, RidgeCV
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import LeaveOneGroupOut, cross_val_predict
 from sklearn.pipeline import make_pipeline
@@ -48,12 +48,14 @@ from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import (BOOSTING_PARAMS, LINEAR_C, N_PERMUTATIONS,  # noqa: E402
+                    RIDGE_ALPHA_GRID,
                     RANDOM_STATE, RIDGE_ALPHA, Paths)
 
 TASKS = {  # task -> (target column, trait or state)
     "expertise": ("group_binary", "trait"),
     "concentration": ("concentration_rating", "state"),
     "mind_wandering": ("mind_wandering_rating", "state"),
+    "depth": ("depth_rating", "state"),  # ds008836 (phase 7)
 }
 INTERPRETABLE_FEATURES = ["minimal_ratio", "minimal_pac"]
 # Non-EEG baselines, scored exactly like the EEG models. An EEG model only
@@ -79,7 +81,11 @@ def make_model(name: str, kind: str):
     the larger class -- i.e. always the held-out person's opposite, scoring
     ~0% instead of ~50%."""
     trait = kind == "trait"
-    if name == "boosting_spectral":
+    if name in ("linear_spectral_plus", "riemann_ridge", "epoch_ridge"):
+        # Phase 7: many features, so alpha is chosen inside each training fold.
+        return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
+                             RidgeCV(alphas=RIDGE_ALPHA_GRID))
+    if name in ("boosting_spectral", "boosting_spectral_plus"):
         if trait:
             return HistGradientBoostingClassifier(
                 **BOOSTING_PARAMS, class_weight="balanced",

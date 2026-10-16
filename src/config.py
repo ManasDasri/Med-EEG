@@ -103,6 +103,12 @@ MAX_EPOCH_REJECT_RATE = 0.5
 # Aperiodic (1/f) slope is fit in log-log space over this range. 30-45 Hz sits
 # above the alpha/beta peaks, where the spectrum is mostly the 1/f background.
 SLOPE_RANGE_HZ = (30.0, 45.0)
+# Spectrum shape (phase 7): the broadband 1/f background is fit over
+# APERIODIC_RANGE_HZ in log-log space, leaving out the alpha range so the
+# alpha peak doesn't bend the line; the individual alpha peak is the
+# frequency in ALPHA_SEARCH_HZ that rises furthest above that line.
+APERIODIC_RANGE_HZ = (2.0, 40.0)
+ALPHA_SEARCH_HZ = (7.0, 14.0)
 # PAC: each 2 s epoch is band-filtered on its own, then PAC_EDGE_S is cut from
 # both ends to discard filter start-up distortion. With 2 s epochs starting 1 s
 # apart, the kept middle 1 s pieces tile the window exactly once -- no seams
@@ -205,6 +211,9 @@ GROUP_MAP_HINT = (
 RANDOM_STATE = 42
 LINEAR_C = 0.1        # LogisticRegression; smaller = stronger regularisation
 RIDGE_ALPHA = 10.0    # Ridge; larger = stronger regularisation
+# Phase 7 high-dimensional models choose alpha from this grid INSIDE each
+# training fold (efficient leave-one-out on the training rows only).
+RIDGE_ALPHA_GRID = tuple(10.0 ** (k / 2) for k in range(-2, 11))  # 0.1 ... 1e5
 BOOSTING_PARAMS = {
     "max_depth": 3,
     "learning_rate": 0.05,
