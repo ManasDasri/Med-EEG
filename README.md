@@ -182,24 +182,25 @@ the time, so a bare accuracy figure without a chance level means little. Full
 analysis: the phase 3 breakdown, and `model_comparison_<task>.csv` in the
 derivatives folder.
 
-*The phase 4–5 numbers below were computed before the ICA-sampling fix and
-have not been re-run on the corrected features yet.*
+*Phase 4–5 numbers below: re-run on the corrected features (after the
+ICA-sampling fix), 17 Oct.*
 
 Further within-person analyses (mixed models, phase 4): concentration rises
-over a session (p = 0.0005) and slow-wave power tracks drowsiness (lower
-concentration, higher tiredness). Exploratory but robust to per-person random
+over a session (p = 0.0004), and higher delta (slow-wave) power goes with
+lower concentration (p = 0.031); its link to tiredness, seen before the fix,
+is no longer significant (p = 0.10). Exploratory but robust to per-person random
 slopes and sex: **in experts a higher gamma/theta ratio goes with lower
-concentration, in novices it doesn't** (interaction p = 0.0004). Electrode
+concentration, in novices it doesn't** (interaction p = 0.0003). Electrode
 minimalism: for mind wandering one electrode (AF8, chosen on training people
 only) matches the full scalp.
 
 Robustness (phase 5, `robustness_checks.py`): the expertise × ratio effect
-**replicates separately in first sessions (p = 0.013) and later sessions
-(p = 0.005)**, survives dropping any single person (weakest p = 0.012), is
+**replicates separately in first sessions (p = 0.012) and later sessions
+(p = 0.002)**, survives dropping any single person (weakest p = 0.010), is
 carried by gamma power, and survives controlling for temple-electrode gamma, a
-muscle marker (p = 0.003). The one-electrode mind-wandering detector does
-**not** replicate across sessions (p ≈ 0.08–0.09, and a different electrode is
-chosen each way).
+muscle marker (p = 0.002). The one-electrode mind-wandering detector (AF8,
+AUC 0.629 vs 0.589 for all 64) does **not** replicate across sessions
+(p = 0.06 and 0.09, and a different electrode is chosen each way).
 
 ### Independent replication (phase 6)
 
