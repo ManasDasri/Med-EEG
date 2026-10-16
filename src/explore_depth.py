@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegressionCV, RidgeCV
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -40,6 +40,11 @@ HOLDOUT = ["sub-005", "sub-006", "sub-008", "sub-011", "sub-019", "sub-024",
            "sub-025", "sub-026", "sub-029", "sub-030", "sub-031", "sub-035",
            "sub-039"]
 TIE = 0.005
+# Round 2 (amendment): alpha chosen by subject-grouped CV over a wider grid.
+# RidgeCV's built-in leave-one-out leaks here: features (and a centred target)
+# sum to zero within each recording, so with more features than reports a
+# left-out report is predictable from the rest of its recording.
+ALPHA_GRID = tuple(10.0 ** (k / 2) for k in range(-2, 15))  # 0.1 ... 1e7
 warnings.filterwarnings("ignore", category=FutureWarning)  # sklearn 1.10 API notices
 
 
@@ -107,6 +112,12 @@ def zrec(values, rec: pd.Series) -> np.ndarray:
     return ((s - g.transform("mean")) / g.transform("std").replace(0, 1)).fillna(0).to_numpy()
 
 
+def ridge(train: pd.DataFrame):
+    folds = list(GroupKFold(5).split(train, groups=train["subject"]))
+    return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
+                         RidgeCV(alphas=ALPHA_GRID, cv=folds))
+
+
 def fit_predict(train: pd.DataFrame, test: pd.DataFrame, cand: dict, sets: dict
                 ) -> np.ndarray:
     """cand: {"features": set name, "learner": ridge|boost|ensemble|baseline,
@@ -129,8 +140,9 @@ def fit_predict(train: pd.DataFrame, test: pd.DataFrame, cand: dict, sets: dict
                                   LogisticRegressionCV(Cs=np.logspace(-5, 1, 7), cv=folds,
                                                        scoring="roc_auc", max_iter=3000))
         return model.fit(X, y).predict_proba(Xt)[:, 1]
-    name = {"ridge": "riemann_ridge", "boost": "boosting_spectral_plus",
-            "baseline": "baseline_context"}[cand["learner"]]
+    if cand["learner"] == "ridge":
+        return ridge(train).fit(X, y).predict(Xt)
+    name = {"boost": "boosting_spectral_plus", "baseline": "baseline_context"}[cand["learner"]]
     return make_model(name, "state").fit(X, y).predict(Xt)
 
 
@@ -172,7 +184,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--derivatives", required=True, type=Path)
     parser.add_argument("--output_dir", required=True, type=Path)
-    parser.add_argument("--n_permutations", type=int, default=200)
+    parser.add_argument("--n_permutations", type=int, default=100)
     parser.add_argument("--n_holdout_shifts", type=int, default=1000)
     parser.add_argument("--n_jobs", type=int, default=4)
     args = parser.parse_args()

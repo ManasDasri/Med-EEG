@@ -4,9 +4,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.linear_model import RidgeCV
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from explore_depth import fit_predict, loso, previous_average, zrec  # noqa: E402
+from explore_depth import ALPHA_GRID, loso, previous_average, ridge, zrec  # noqa: E402
 from model_comparison import score  # noqa: E402
 
 rng = np.random.default_rng(3)
@@ -40,5 +41,16 @@ for target in ("raw", "z", "binary"):
 off = synthetic(0.0)
 cand = {"features": "riemann", "learner": "ridge", "target": "z"}
 assert abs(score(off, off["depth_rating"], loso(off, cand, sets), "state")["score"] - 0.5) < 0.12
+
+# Alpha selection must not leak: pure noise, more features than reports,
+# features and target centred per recording. RidgeCV's built-in leave-one-out
+# picks the smallest alpha here (it fits the noise); grouped CV must not.
+g = np.repeat(np.arange(30), 20)
+X = rng.standard_normal((600, 1500)); y = rng.standard_normal(600)
+X -= pd.DataFrame(X).groupby(g).transform("mean").to_numpy()
+y -= pd.Series(y).groupby(g).transform("mean").to_numpy()
+assert RidgeCV(alphas=ALPHA_GRID).fit(X, y).alpha_ == ALPHA_GRID[0]  # the leak, reproduced
+noise = pd.DataFrame({"subject": [f"s{i}" for i in g]})
+assert ridge(noise).fit(X, y)[-1].alpha_ >= 1e4
 
 print("ok: explore_depth")
