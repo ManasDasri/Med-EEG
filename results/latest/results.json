@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "published_at": "2026-10-13T17:41:32+00:00",
- "publisher_revision": "e69f8721b92d46b2fb7688463387d921981797bf",
+ "published_at": "2026-10-16T18:48:59+00:00",
+ "publisher_revision": "47dcec8682f90dd10e85d8a68ce7b0c93d08e534",
  "tasks": {
   "expertise": {
    "task": "expertise",
@@ -1576,6 +1576,1321 @@
     "stage": "model_comparison_mind_wandering",
     "created_at": "20261013T173550841227Z",
     "code_revision": "032d305831a980d47d8ba3d11e94ade206a60346",
+    "dirty_checkout": false,
+    "n_permutations": 200,
+    "packages": {
+     "mne": "1.13.2",
+     "numpy": "2.5.3",
+     "pandas": "3.0.6",
+     "scipy": "1.18.1",
+     "scikit-learn": "1.9.1",
+     "statsmodels": "0.15.0"
+    }
+   }
+  },
+  "depth": {
+   "task": "depth",
+   "kind": "state",
+   "metric": "within_subject_auc",
+   "chance_reference": 0.5,
+   "p_column": "p_holm_task",
+   "multiplicity": "all models including baselines for depth",
+   "scope": "retrospective LOSO; full-recording EEG normalization and preprocessing",
+   "models": [
+    {
+     "model": "linear_spectral",
+     "label": "Linear, 67 spectral features",
+     "kind": "eeg",
+     "score": 0.5577772272000866,
+     "ci_low": 0.5220725368222627,
+     "ci_high": 0.5932045065898685,
+     "chance": 0.5017920085315946,
+     "p_value": 0.0099502487562189,
+     "p_corrected": 0.0398009950248756,
+     "n_subjects": 39,
+     "n_probes": 1707
+    },
+    {
+     "model": "linear_spectral_plus",
+     "label": "Linear, spectral + 1/f + alpha peak",
+     "kind": "eeg",
+     "score": 0.5627874348736424,
+     "ci_low": 0.525098391205391,
+     "ci_high": 0.5991345606762446,
+     "chance": 0.5011159094707734,
+     "p_value": 0.0049751243781094,
+     "p_corrected": 0.0348258706467661,
+     "n_subjects": 39,
+     "n_probes": 1707
+    },
+    {
+     "model": "boosting_spectral_plus",
+     "label": "Gradient boosting, spectral + 1/f + alpha peak",
+     "kind": "eeg",
+     "score": 0.5715700924157198,
+     "ci_low": 0.5338136471551611,
+     "ci_high": 0.6091795649622325,
+     "chance": 0.5079113261100122,
+     "p_value": 0.0049751243781094,
+     "p_corrected": 0.0348258706467661,
+     "n_subjects": 39,
+     "n_probes": 1707
+    },
+    {
+     "model": "riemann_ridge",
+     "label": "Riemannian, 64-channel covariance",
+     "kind": "eeg",
+     "score": 0.6093028611323545,
+     "ci_low": 0.5659402318955816,
+     "ci_high": 0.6497805713564296,
+     "chance": 0.5021168018058693,
+     "p_value": 0.0049751243781094,
+     "p_corrected": 0.0348258706467661,
+     "n_subjects": 39,
+     "n_probes": 1707
+    },
+    {
+     "model": "baseline_time",
+     "label": "Time into session (no EEG)",
+     "kind": "baseline",
+     "score": 0.4618603976120127,
+     "ci_low": 0.4172215796615928,
+     "ci_high": 0.5068289153438127,
+     "chance": 0.5003653067621451,
+     "p_value": 0.9203980099502488,
+     "p_corrected": 0.9203980099502488,
+     "n_subjects": 39,
+     "n_probes": 1707
+    },
+    {
+     "model": "baseline_context",
+     "label": "Time + block + report type (no EEG)",
+     "kind": "baseline",
+     "score": 0.5186112834358414,
+     "ci_low": 0.4756409566841775,
+     "ci_high": 0.564034495469783,
+     "chance": 0.5005902924406539,
+     "p_value": 0.1791044776119403,
+     "p_corrected": 0.3582089552238806,
+     "n_subjects": 39,
+     "n_probes": 1707
+    },
+    {
+     "model": "epoch_ridge",
+     "label": "Linear, per 2-s segment",
+     "kind": "eeg",
+     "score": 0.5491419328994548,
+     "ci_low": 0.508220956926825,
+     "ci_high": 0.5868814924537994,
+     "chance": 0.5008481950238531,
+     "p_value": 0.0149253731343283,
+     "p_corrected": 0.044776119402985,
+     "n_subjects": 39,
+     "n_probes": 1707
+    }
+   ],
+   "subject_scores": {
+    "baseline_context": [
+     {
+      "subject": "sub-001",
+      "score": 0.5827664399092971
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.4189473684210526
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.799111111111111
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.4125636672325976
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.69281045751634
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.3234265734265734
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.4210526315789473
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.5238095238095238
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.5040485829959513
+     },
+     {
+      "subject": "sub-010",
+      "score": 0.8768328445747801
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.3247863247863248
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.6553552492046659
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.491358024691358
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.4962406015037594
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.675
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.5603715170278638
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.5977443609022556
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.4331550802139037
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.6136363636363636
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.6465201465201464
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.6923076923076923
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.5231481481481481
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.4799999999999999
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4662162162162162
+     },
+     {
+      "subject": "sub-025",
+      "score": 0.3708333333333333
+     },
+     {
+      "subject": "sub-026",
+      "score": 0.1675824175824175
+     },
+     {
+      "subject": "sub-027",
+      "score": 0.4699792960662526
+     },
+     {
+      "subject": "sub-028",
+      "score": 0.5111607142857143
+     },
+     {
+      "subject": "sub-029",
+      "score": 0.4479166666666667
+     },
+     {
+      "subject": "sub-030",
+      "score": 0.6000000000000001
+     },
+     {
+      "subject": "sub-031",
+      "score": 0.5769230769230769
+     },
+     {
+      "subject": "sub-032",
+      "score": 0.5728395061728395
+     },
+     {
+      "subject": "sub-033",
+      "score": 0.3347107438016529
+     },
+     {
+      "subject": "sub-034",
+      "score": 0.6234567901234568
+     },
+     {
+      "subject": "sub-035",
+      "score": 0.6545454545454545
+     },
+     {
+      "subject": "sub-036",
+      "score": 0.513157894736842
+     },
+     {
+      "subject": "sub-037",
+      "score": 0.3846153846153846
+     },
+     {
+      "subject": "sub-038",
+      "score": 0.3732193732193732
+     },
+     {
+      "subject": "sub-039",
+      "score": 0.4136904761904762
+     }
+    ],
+    "baseline_time": [
+     {
+      "subject": "sub-001",
+      "score": 0.1848072562358277
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.52
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.456
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.6213921901528013
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.7630718954248366
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.3513986013986014
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.6111111111111112
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.3357142857142857
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.3704453441295547
+     },
+     {
+      "subject": "sub-010",
+      "score": 0.3284457478005865
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.2393162393162393
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.4888653234358431
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.7160493827160493
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.3045112781954887
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.6111111111111112
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.5835913312693498
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.5319548872180451
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.1764705882352941
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.4990530303030303
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.478021978021978
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.2829670329670329
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.4814814814814815
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.44
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.5878378378378378
+     },
+     {
+      "subject": "sub-025",
+      "score": 0.4541666666666666
+     },
+     {
+      "subject": "sub-026",
+      "score": 0.8076923076923077
+     },
+     {
+      "subject": "sub-027",
+      "score": 0.4637681159420289
+     },
+     {
+      "subject": "sub-028",
+      "score": 0.5267857142857143
+     },
+     {
+      "subject": "sub-029",
+      "score": 0.4479166666666667
+     },
+     {
+      "subject": "sub-030",
+      "score": 0.4333333333333333
+     },
+     {
+      "subject": "sub-031",
+      "score": 0.5096153846153846
+     },
+     {
+      "subject": "sub-032",
+      "score": 0.5111111111111111
+     },
+     {
+      "subject": "sub-033",
+      "score": 0.3223140495867769
+     },
+     {
+      "subject": "sub-034",
+      "score": 0.5277777777777778
+     },
+     {
+      "subject": "sub-035",
+      "score": 0.5272727272727273
+     },
+     {
+      "subject": "sub-036",
+      "score": 0.5263157894736843
+     },
+     {
+      "subject": "sub-037",
+      "score": 0.2264957264957265
+     },
+     {
+      "subject": "sub-038",
+      "score": 0.3447293447293447
+     },
+     {
+      "subject": "sub-039",
+      "score": 0.4196428571428571
+     }
+    ],
+    "boosting_spectral_plus": [
+     {
+      "subject": "sub-001",
+      "score": 0.6938775510204082
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.7031578947368421
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.5173333333333333
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.5280135823429541
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.4803921568627451
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.6188811188811189
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.6520467836257311
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.5738095238095238
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.4089068825910931
+     },
+     {
+      "subject": "sub-010",
+      "score": 0.6055718475073314
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.6239316239316239
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.5546129374337221
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.382716049382716
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.4887218045112782
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.6250000000000001
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.4551083591331269
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.706766917293233
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.5267379679144385
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.5454545454545454
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.532967032967033
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.3901098901098901
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.3796296296296296
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.776
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4675675675675675
+     },
+     {
+      "subject": "sub-025",
+      "score": 0.8291666666666666
+     },
+     {
+      "subject": "sub-026",
+      "score": 0.3461538461538461
+     },
+     {
+      "subject": "sub-027",
+      "score": 0.7515527950310559
+     },
+     {
+      "subject": "sub-028",
+      "score": 0.5357142857142857
+     },
+     {
+      "subject": "sub-029",
+      "score": 0.65625
+     },
+     {
+      "subject": "sub-030",
+      "score": 0.6766666666666666
+     },
+     {
+      "subject": "sub-031",
+      "score": 0.6490384615384616
+     },
+     {
+      "subject": "sub-032",
+      "score": 0.5580246913580247
+     },
+     {
+      "subject": "sub-033",
+      "score": 0.6363636363636364
+     },
+     {
+      "subject": "sub-034",
+      "score": 0.4753086419753086
+     },
+     {
+      "subject": "sub-035",
+      "score": 0.4818181818181818
+     },
+     {
+      "subject": "sub-036",
+      "score": 0.5877192982456141
+     },
+     {
+      "subject": "sub-037",
+      "score": 0.4572649572649573
+     },
+     {
+      "subject": "sub-038",
+      "score": 0.6182336182336182
+     },
+     {
+      "subject": "sub-039",
+      "score": 0.7946428571428572
+     }
+    ],
+    "epoch_ridge": [
+     {
+      "subject": "sub-001",
+      "score": 0.5793650793650794
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.4252631578947369
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.560888888888889
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.3106960950764006
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.2728758169934641
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.513986013986014
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.5087719298245614
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.6047619047619048
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.5404858299595142
+     },
+     {
+      "subject": "sub-010",
+      "score": 0.5527859237536656
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.5726495726495726
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.4878048780487805
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.5604938271604939
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.5902255639097744
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.6194444444444445
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.3544891640866873
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.5582706766917294
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.320855614973262
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.5909090909090908
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.5934065934065934
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.4313186813186813
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.6296296296296297
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.608
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4418918918918919
+     },
+     {
+      "subject": "sub-025",
+      "score": 0.65
+     },
+     {
+      "subject": "sub-026",
+      "score": 0.6565934065934066
+     },
+     {
+      "subject": "sub-027",
+      "score": 0.6728778467908902
+     },
+     {
+      "subject": "sub-028",
+      "score": 0.4977678571428571
+     },
+     {
+      "subject": "sub-029",
+      "score": 0.5833333333333334
+     },
+     {
+      "subject": "sub-030",
+      "score": 0.7100000000000001
+     },
+     {
+      "subject": "sub-031",
+      "score": 0.5841346153846154
+     },
+     {
+      "subject": "sub-032",
+      "score": 0.4493827160493827
+     },
+     {
+      "subject": "sub-033",
+      "score": 0.6673553719008264
+     },
+     {
+      "subject": "sub-034",
+      "score": 0.7654320987654321
+     },
+     {
+      "subject": "sub-035",
+      "score": 0.6181818181818182
+     },
+     {
+      "subject": "sub-036",
+      "score": 0.3508771929824562
+     },
+     {
+      "subject": "sub-037",
+      "score": 0.4786324786324786
+     },
+     {
+      "subject": "sub-038",
+      "score": 0.8062678062678061
+     },
+     {
+      "subject": "sub-039",
+      "score": 0.6964285714285714
+     }
+    ],
+    "linear_spectral": [
+     {
+      "subject": "sub-001",
+      "score": 0.7437641723356009
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.4757894736842105
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.5733333333333334
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.5602716468590833
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.3366013071895425
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.7080419580419579
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.4970760233918128
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.6095238095238096
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.5850202429149798
+     },
+     {
+      "subject": "sub-010",
+      "score": 0.5483870967741936
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.4358974358974359
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.4390243902439024
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.5111111111111111
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.5864661654135339
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.663888888888889
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.4489164086687306
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.5037593984962405
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.4999999999999999
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.4507575757575757
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.6794871794871795
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.3543956043956044
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.6620370370370371
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.652
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.3756756756756756
+     },
+     {
+      "subject": "sub-025",
+      "score": 0.525
+     },
+     {
+      "subject": "sub-026",
+      "score": 0.4862637362637362
+     },
+     {
+      "subject": "sub-027",
+      "score": 0.6211180124223602
+     },
+     {
+      "subject": "sub-028",
+      "score": 0.4263392857142857
+     },
+     {
+      "subject": "sub-029",
+      "score": 0.5729166666666666
+     },
+     {
+      "subject": "sub-030",
+      "score": 0.7833333333333334
+     },
+     {
+      "subject": "sub-031",
+      "score": 0.5625
+     },
+     {
+      "subject": "sub-032",
+      "score": 0.6148148148148148
+     },
+     {
+      "subject": "sub-033",
+      "score": 0.6136363636363636
+     },
+     {
+      "subject": "sub-034",
+      "score": 0.595679012345679
+     },
+     {
+      "subject": "sub-035",
+      "score": 0.6227272727272728
+     },
+     {
+      "subject": "sub-036",
+      "score": 0.5833333333333334
+     },
+     {
+      "subject": "sub-037",
+      "score": 0.4316239316239316
+     },
+     {
+      "subject": "sub-038",
+      "score": 0.6866096866096866
+     },
+     {
+      "subject": "sub-039",
+      "score": 0.726190476190476
+     }
+    ],
+    "linear_spectral_plus": [
+     {
+      "subject": "sub-001",
+      "score": 0.6972789115646258
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.5578947368421053
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.4168888888888889
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.4414261460101868
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.3872549019607844
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.6188811188811187
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.543859649122807
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.7714285714285715
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.4838056680161943
+     },
+     {
+      "subject": "sub-010",
+      "score": 0.6642228739002932
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.4401709401709402
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.5641569459172853
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.437037037037037
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.5451127819548872
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.6555555555555556
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.4256965944272445
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.5244360902255639
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.4278074866310161
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.4374999999999999
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.5750915750915752
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.3818681318681318
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.4398148148148147
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.72
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.5635135135135134
+     },
+     {
+      "subject": "sub-025",
+      "score": 0.6208333333333333
+     },
+     {
+      "subject": "sub-026",
+      "score": 0.576923076923077
+     },
+     {
+      "subject": "sub-027",
+      "score": 0.5962732919254659
+     },
+     {
+      "subject": "sub-028",
+      "score": 0.4419642857142857
+     },
+     {
+      "subject": "sub-029",
+      "score": 0.71875
+     },
+     {
+      "subject": "sub-030",
+      "score": 0.7933333333333333
+     },
+     {
+      "subject": "sub-031",
+      "score": 0.6225961538461539
+     },
+     {
+      "subject": "sub-032",
+      "score": 0.5777777777777777
+     },
+     {
+      "subject": "sub-033",
+      "score": 0.6466942148760331
+     },
+     {
+      "subject": "sub-034",
+      "score": 0.6759259259259259
+     },
+     {
+      "subject": "sub-035",
+      "score": 0.5363636363636364
+     },
+     {
+      "subject": "sub-036",
+      "score": 0.6929824561403509
+     },
+     {
+      "subject": "sub-037",
+      "score": 0.3675213675213675
+     },
+     {
+      "subject": "sub-038",
+      "score": 0.6011396011396011
+     },
+     {
+      "subject": "sub-039",
+      "score": 0.7589285714285714
+     }
+    ],
+    "riemann_ridge": [
+     {
+      "subject": "sub-001",
+      "score": 0.7301587301587301
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.671578947368421
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.6195555555555555
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.6808149405772496
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.6928104575163399
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.5122377622377621
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.5614035087719298
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.6595238095238095
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.562753036437247
+     },
+     {
+      "subject": "sub-010",
+      "score": 0.7302052785923754
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.5170940170940171
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.7274655355249204
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.582716049382716
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.7067669172932332
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.6055555555555556
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.5619195046439629
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.6109022556390977
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.6016042780748663
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.5331439393939393
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.7838827838827839
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.8626373626373627
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.6157407407407407
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.6519999999999999
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4918918918918918
+     },
+     {
+      "subject": "sub-025",
+      "score": 0.5041666666666667
+     },
+     {
+      "subject": "sub-026",
+      "score": 0.1923076923076923
+     },
+     {
+      "subject": "sub-027",
+      "score": 0.8757763975155279
+     },
+     {
+      "subject": "sub-028",
+      "score": 0.6361607142857143
+     },
+     {
+      "subject": "sub-029",
+      "score": 0.4687499999999999
+     },
+     {
+      "subject": "sub-030",
+      "score": 0.73
+     },
+     {
+      "subject": "sub-031",
+      "score": 0.3028846153846154
+     },
+     {
+      "subject": "sub-032",
+      "score": 0.3703703703703704
+     },
+     {
+      "subject": "sub-033",
+      "score": 0.518595041322314
+     },
+     {
+      "subject": "sub-034",
+      "score": 0.632716049382716
+     },
+     {
+      "subject": "sub-035",
+      "score": 0.7227272727272728
+     },
+     {
+      "subject": "sub-036",
+      "score": 0.7017543859649122
+     },
+     {
+      "subject": "sub-037",
+      "score": 0.5897435897435898
+     },
+     {
+      "subject": "sub-038",
+      "score": 0.5014245014245015
+     },
+     {
+      "subject": "sub-039",
+      "score": 0.7410714285714286
+     }
+    ]
+   },
+   "baseline_comparisons": [
+    {
+     "model": "linear_spectral",
+     "baseline": "baseline_time",
+     "mean_difference": 0.095916829588074,
+     "ci_low": 0.0290677999176824,
+     "ci_high": 0.1606241035027587,
+     "n_subjects": 39
+    },
+    {
+     "model": "linear_spectral",
+     "baseline": "baseline_context",
+     "mean_difference": 0.0391659437642453,
+     "ci_low": -0.0222262211656999,
+     "ci_high": 0.0923080687352425,
+     "n_subjects": 39
+    },
+    {
+     "model": "linear_spectral_plus",
+     "baseline": "baseline_time",
+     "mean_difference": 0.1009270372616297,
+     "ci_low": 0.0369470923182066,
+     "ci_high": 0.1656721079728331,
+     "n_subjects": 39
+    },
+    {
+     "model": "linear_spectral_plus",
+     "baseline": "baseline_context",
+     "mean_difference": 0.044176151437801,
+     "ci_low": -0.0202963015973262,
+     "ci_high": 0.1010336359457103,
+     "n_subjects": 39
+    },
+    {
+     "model": "boosting_spectral_plus",
+     "baseline": "baseline_time",
+     "mean_difference": 0.1097096948037069,
+     "ci_low": 0.0423689062086859,
+     "ci_high": 0.1746804412793615,
+     "n_subjects": 39
+    },
+    {
+     "model": "boosting_spectral_plus",
+     "baseline": "baseline_context",
+     "mean_difference": 0.0529588089798782,
+     "ci_low": -0.0122625789138099,
+     "ci_high": 0.1120259743985772,
+     "n_subjects": 39
+    },
+    {
+     "model": "riemann_ridge",
+     "baseline": "baseline_time",
+     "mean_difference": 0.1474424635203419,
+     "ci_low": 0.0728892559011239,
+     "ci_high": 0.2159641669129353,
+     "n_subjects": 39
+    },
+    {
+     "model": "riemann_ridge",
+     "baseline": "baseline_context",
+     "mean_difference": 0.0906915776965132,
+     "ci_low": 0.0459028363193159,
+     "ci_high": 0.1319200489447365,
+     "n_subjects": 39
+    },
+    {
+     "model": "epoch_ridge",
+     "baseline": "baseline_time",
+     "mean_difference": 0.087281535287442,
+     "ci_low": 0.0190941195627829,
+     "ci_high": 0.1479814140237564,
+     "n_subjects": 39
+    },
+    {
+     "model": "epoch_ridge",
+     "baseline": "baseline_context",
+     "mean_difference": 0.0305306494636133,
+     "ci_low": -0.0328126075738582,
+     "ci_high": 0.0904505688784743,
+     "n_subjects": 39
+    }
+   ],
+   "headline": {
+    "best_model": "riemann_ridge",
+    "best_score": 0.6093028611323545,
+    "best_baseline": "baseline_context",
+    "best_baseline_score": 0.5186112834358414,
+    "beats_chance": true,
+    "beats_best_baseline": true
+   },
+   "source": {
+    "stage": "depth_decoding",
+    "created_at": "20261016T144955568792Z",
+    "code_revision": "5d3017fa941519f834c31334d6cb7880ca3dca84",
     "dirty_checkout": false,
     "n_permutations": 200,
     "packages": {

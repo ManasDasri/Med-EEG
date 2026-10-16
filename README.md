@@ -90,6 +90,8 @@ src/
   robustness_checks.py    session-split, leave-one-out and muscle checks of the leads
   ds008836.py             adapter for the replication dataset (loader + report windows)
   replication_ds008836.py the pre-registered replication test
+  depth_decoding.py       decode depth in ds008836: spectral, Riemannian, segment models
+  publish_results.py      bundle finished runs into results/latest/results.json
   model_comparison.py     LOSO models + permutation tests + non-EEG baselines + SHAP
   export_dashboard.py     bundle results into dashboard_data.json
   followup_analysis.py    follow-ups: delta power, tiredness, random slopes, expertise
@@ -101,6 +103,7 @@ tests/
   test_robustness_checks.py     cross-session electrode transfer checks
   test_ds008836.py              replication report-window parser
   test_replication.py           pre-registered decision rule
+  test_depth_decoding.py        Riemannian re-centring and segment-model checks
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          retirement notice for the invalid historical prototype
@@ -211,6 +214,17 @@ negative as predicted (−0.072 within-person SD) but not significant
 blocks gives p = 0.006 (exploratory). Details:
 [`docs/replication_ds008836_results.md`](docs/replication_ds008836_results.md).
 
+### Decoding meditation depth (phase 7)
+
+Planned before any run ([`docs/analysis_plan_depth_decoding.md`](docs/analysis_plan_depth_decoding.md)),
+on ds008836 (39 people, 1,707 depth reports). **Decoded:** a Riemannian
+model on each report's 64-channel covariance tells a person's
+deeper-than-usual reports from their shallower ones at within-person AUC
+**0.609** (95% 0.565–0.649; chance 0.502; Holm p = 0.035), beating the best
+non-EEG baseline by +0.091 per person (0.046–0.132). Spectrum-based models
+reach 0.55–0.57. Modest, and people vary a lot: 13 randomly chosen people
+average 0.54. Details: [`docs/depth_decoding_results.md`](docs/depth_decoding_results.md).
+
 ## Publishing results
 
 After a new analysis run, bundle it and push. The dashboard picks it up within
@@ -219,7 +233,8 @@ a few minutes, with no change to the site:
 ```bash
 python src/publish_results.py \
     --models_run <model_comparison run dir> --replication_run <replication run dir> \
-    --qc ds001787=<preprocessing_qc.csv> --qc ds008836=<preprocessing_qc.csv>
+    --qc ds001787=<preprocessing_qc.csv> --qc ds008836=<preprocessing_qc.csv> \\
+    --depth_run <depth_decoding run dir>
 git add results/latest/results.json && git commit -m "Publish results" && git push
 ```
 

@@ -12,7 +12,8 @@ Usage:
         --models_run   ../audit-work/evaluation/dashboard-run-20261013 \\
         --replication_run ../audit-work/evaluation/ds008836-amended-replication \\
         --qc ds001787=../audit-work/evaluation/ds001787/preprocessing_qc.csv \\
-        --qc ds008836=../audit-work/evaluation/ds008836/preprocessing_qc.csv
+        --qc ds008836=../audit-work/evaluation/ds008836/preprocessing_qc.csv \\
+        --depth_run ../audit-work/evaluation/ds008836-phase7/decoding
 """
 from __future__ import annotations
 
@@ -39,7 +40,13 @@ LABELS = {
     "baseline_sex": "Sex only (no EEG)",
     "baseline_age": "Age only (no EEG)",
     "baseline_time": "Time into session (no EEG)",
+    "linear_spectral_plus": "Linear, spectral + 1/f + alpha peak",
+    "boosting_spectral_plus": "Gradient boosting, spectral + 1/f + alpha peak",
+    "riemann_ridge": "Riemannian, 64-channel covariance",
+    "epoch_ridge": "Linear, per 2-s segment",
+    "baseline_context": "Time + block + report type (no EEG)",
 }
+MANIFESTS = {"depth": "depth_decoding_manifest.json"}  # default: model_comparison_<task>
 
 
 def clean(value):
@@ -76,7 +83,7 @@ def task_bundle(root: Path, task: str) -> dict:
     comparison = pd.read_csv(find_one(root, f"model_comparison_{task}.csv"))
     subjects = pd.read_csv(find_one(root, f"subject_scores_{task}.csv"))
     paired = pd.read_csv(find_one(root, f"baseline_comparisons_{task}.csv"))
-    source = provenance(find_one(root, f"model_comparison_{task}_manifest.json"))
+    source = provenance(find_one(root, MANIFESTS.get(task, f"model_comparison_{task}_manifest.json")))
 
     p_col = "p_holm_task" if comparison["p_holm_task"].notna().any() else "p_value"
     models = [{
@@ -149,6 +156,8 @@ def main() -> None:
     parser.add_argument("--replication_run", required=True, type=Path)
     parser.add_argument("--qc", action="append", default=[],
                         help="name=path/to/preprocessing_qc.csv (repeatable)")
+    parser.add_argument("--depth_run", type=Path, default=None,
+                        help="depth_decoding.py run dir (ds008836); depth is skipped without it")
     parser.add_argument("--out", type=Path, default=REPO / "results" / "latest")
     args = parser.parse_args()
 
@@ -158,7 +167,8 @@ def main() -> None:
         "schema": 1,
         "published_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "publisher_revision": revision,
-        "tasks": {t: task_bundle(args.models_run, t) for t in TASKS},
+        "tasks": {t: task_bundle(args.depth_run if t == "depth" else args.models_run, t)
+                  for t in TASKS if t != "depth" or args.depth_run},
         "replication": replication_bundle(args.replication_run),
         "qc": {name: qc_bundle(Path(path))
                for name, path in (q.split("=", 1) for q in args.qc)},

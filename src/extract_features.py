@@ -40,7 +40,8 @@ from config import (ALL_BANDS, ASYMMETRY_PAIR, BANDPASS_HIGH_HZ,
                     MAX_EPOCH_REJECT_RATE, PAC_CLUSTERS, PAC_EDGE_S,
                     PAC_MIN_SECONDS, PAC_N_BINS, PAC_N_SURROGATES,
                     PAC_RANDOM_STATE, REGIONS, SLOPE_RANGE_HZ, THETA_BAND,
-                    Paths)  # noqa: E402
+                    APERIODIC_RANGE_HZ, ALPHA_SEARCH_HZ, Paths)  # noqa: E402
+from sklearn.covariance import oas  # noqa: E402
 
 mne.set_log_level("WARNING")
 
@@ -70,6 +71,35 @@ def loglog_slope(spectrum: np.ndarray, freqs: np.ndarray,
     y = np.log10(spectrum[..., mask])
     xc = x - x.mean()
     return (y * xc).sum(axis=-1) / (xc ** 2).sum()
+
+
+def spectrum_shape(spectrum: np.ndarray, freqs: np.ndarray
+                   ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """1/f exponent, individual alpha peak frequency and the peak's height
+    above the 1/f background (log10 units), over the last axis.
+
+    The background is a least-squares line in log-log space over
+    APERIODIC_RANGE_HZ with ALPHA_SEARCH_HZ left out; the alpha peak is
+    where the log spectrum rises furthest above that line inside
+    ALPHA_SEARCH_HZ. NaN where the spectrum is missing."""
+    lo, hi = APERIODIC_RANGE_HZ
+    a_lo, a_hi = ALPHA_SEARCH_HZ
+    fit = (freqs >= lo) & (freqs <= hi) & ~((freqs >= a_lo) & (freqs <= a_hi))
+    x = np.log10(freqs[fit])
+    y = np.log10(spectrum[..., fit])
+    xc = x - x.mean()
+    slope = (y * xc).sum(axis=-1) / (xc ** 2).sum()
+    intercept = y.mean(axis=-1) - slope * x.mean()
+    alpha = (freqs >= a_lo) & (freqs <= a_hi)
+    residual = (np.log10(spectrum[..., alpha])
+                - (intercept[..., None] + slope[..., None] * np.log10(freqs[alpha])))
+    filled = np.where(np.isfinite(residual), residual, -np.inf)
+    peak = filled.argmax(axis=-1)
+    height = np.take_along_axis(filled, peak[..., None], axis=-1)[..., 0]
+    ok = np.isfinite(height)
+    return (np.where(np.isfinite(slope), -slope, np.nan),
+            np.where(ok, freqs[alpha][peak], np.nan),
+            np.where(ok, height, np.nan))
 
 
 def spectral_features(psd: np.ndarray, freqs: np.ndarray,
@@ -117,6 +147,9 @@ def spectral_features(psd: np.ndarray, freqs: np.ndarray,
                                          / region_total)
         feats[f"{region}_slope"] = loglog_slope(
             psd[..., c, :].mean(axis=-2), freqs, SLOPE_RANGE_HZ)
+        (feats[f"{region}_aperiodic"], feats[f"{region}_iaf"],
+         feats[f"{region}_alphapeak"]) = spectrum_shape(
+            psd[..., c, :].mean(axis=-2), freqs)
 
     if all(ch in idx for ch in ASYMMETRY_PAIR):
         right, left = [idx[ch] for ch in ASYMMETRY_PAIR]
@@ -210,6 +243,21 @@ def pac_features(epochs: mne.Epochs) -> dict[str, float]:
 
 # --- Per probe -------------------------------------------------------------------------
 
+def covariance_features(epochs: mne.Epochs) -> dict[str, float]:
+    """Channel covariance of the probe's whole window (all epochs pooled),
+    with OAS shrinkage so it stays invertible after average referencing
+    (which makes the raw covariance rank-deficient). Stored as the upper
+    triangle, one column per channel pair: cov__<ch1>__<ch2>. Used by the
+    Riemannian depth decoder (depth_decoding.py)."""
+    data = epochs.get_data(picks="eeg")
+    names = [epochs.ch_names[i] for i in mne.pick_types(epochs.info, eeg=True)]
+    pooled = data.transpose(1, 0, 2).reshape(len(names), -1)
+    cov, _ = oas(pooled.T)
+    rows, cols = np.triu_indices(len(names))
+    return {f"cov__{names[i]}__{names[j]}": float(cov[i, j])
+            for i, j in zip(rows, cols)}
+
+
 def probe_features(row: dict, window_s: float | None
                    ) -> tuple[dict, pd.DataFrame] | None:
     """Features for one probe's epochs file: (probe-level row, epoch-level
@@ -234,6 +282,7 @@ def probe_features(row: dict, window_s: float | None
                       spectral_features(psd.mean(axis=0), freqs,
                                         epochs.ch_names).items()})
     probe_row.update(pac_features(epochs))
+    probe_row.update(covariance_features(epochs))
     probe_row["n_epochs_used"] = len(epochs)
 
     epoch_table = pd.DataFrame(spectral_features(psd, freqs, epochs.ch_names))
