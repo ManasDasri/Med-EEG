@@ -75,8 +75,12 @@ def main() -> None:
     cols = sets["riemann"]
     held = df["subject"].isin(HOLDOUT).to_numpy()
     dev, test = df[~held].reset_index(drop=True), df[held].reset_index(drop=True)
-    if not (df.groupby("subject")["session"].nunique() == 2).all():
-        raise SystemExit("everyone needs two sessions for this design")
+    # People with one usable session can't be calibrated (sub-029: its other
+    # recording failed QC); they sit this round out.
+    sessions = df.groupby("subject")["session"].nunique()
+    one = sessions.index[sessions < 2].tolist()
+    print(f"[ok] excluded (one session): {one or 'none'}", flush=True)
+    df = df[~df["subject"].isin(one)]
 
     # Alpha per left-out person, chosen without that person (person-grouped CV).
     def alpha_without(pool, p):
@@ -84,7 +88,7 @@ def main() -> None:
         return p, ridge(rest).fit(rest[cols], rest[TARGET])[-1].alpha_
     alphas = dict(Parallel(n_jobs=args.n_jobs)(
         delayed(alpha_without)(dev, p) for p in dev["subject"].unique()))
-    alphas_test = dict.fromkeys(HOLDOUT, ridge(dev).fit(dev[cols], dev[TARGET])[-1].alpha_)
+    alphas_test = dict.fromkeys(test["subject"].unique(), ridge(dev).fit(dev[cols], dev[TARGET])[-1].alpha_)
 
     # Search set.
     preds = calibrated(dev, dev, cols, alphas, dev[TARGET])

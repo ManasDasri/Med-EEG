@@ -27,3 +27,9 @@ ds008836 participant has two sessions, so this can be tested directly.
   paired per-person difference; 1,000 circular shifts for p.
 - Calibration counts as helping only if the held-out paired difference vs
   *w* = 0 has a 95% interval above 0.
+
+## Fix before any result (22:44)
+The first launch stopped at a check: sub-029 (held-out) has only one usable
+session (its other recording failed the quality exclusion), so it can't be
+calibrated. It sits this round out; both *w* = 0 and the chosen *w* are
+scored on the same 12 held-out people.
