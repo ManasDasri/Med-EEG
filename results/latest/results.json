@@ -1,0 +1,1769 @@
+{
+ "schema": 1,
+ "published_at": "2026-10-13T17:41:32+00:00",
+ "publisher_revision": "e69f8721b92d46b2fb7688463387d921981797bf",
+ "tasks": {
+  "expertise": {
+   "task": "expertise",
+   "kind": "trait",
+   "metric": "subject_accuracy",
+   "chance_reference": 0.5,
+   "p_column": "p_holm_task",
+   "multiplicity": "all models including baselines for expertise",
+   "scope": "retrospective LOSO; full-recording EEG normalization and preprocessing",
+   "models": [
+    {
+     "model": "interpretable_ratio_pac",
+     "label": "Interpretable (\u03b3/\u03b8 ratio + PAC)",
+     "kind": "eeg",
+     "score": 0.5652173913043478,
+     "ci_low": 0.3478260869565217,
+     "ci_high": 0.7391304347826086,
+     "chance": 0.5023913043478261,
+     "p_value": 0.3880597014925373,
+     "p_corrected": 0.5771144278606966,
+     "n_subjects": 23,
+     "n_probes": 929
+    },
+    {
+     "model": "linear_spectral",
+     "label": "Linear, 67 spectral features",
+     "kind": "eeg",
+     "score": 0.782608695652174,
+     "ci_low": 0.6086956521739131,
+     "ci_high": 0.9130434782608696,
+     "chance": 0.4943478260869565,
+     "p_value": 0.0248756218905472,
+     "p_corrected": 0.099502487562189,
+     "n_subjects": 23,
+     "n_probes": 929
+    },
+    {
+     "model": "boosting_spectral",
+     "label": "Gradient boosting, 67 spectral features",
+     "kind": "eeg",
+     "score": 0.6956521739130435,
+     "ci_low": 0.5217391304347826,
+     "ci_high": 0.8695652173913043,
+     "chance": 0.4773913043478261,
+     "p_value": 0.0796019900497512,
+     "p_corrected": 0.2388059701492537,
+     "n_subjects": 23,
+     "n_probes": 929
+    },
+    {
+     "model": "baseline_sex",
+     "label": "Sex only (no EEG)",
+     "kind": "baseline",
+     "score": 0.8260869565217391,
+     "ci_low": 0.6521739130434783,
+     "ci_high": 0.9565217391304348,
+     "chance": 0.4995652173913044,
+     "p_value": 0.0099502487562189,
+     "p_corrected": 0.0497512437810945,
+     "n_subjects": 23,
+     "n_probes": 929
+    },
+    {
+     "model": "baseline_age",
+     "label": "Age only (no EEG)",
+     "kind": "baseline",
+     "score": 0.6086956521739131,
+     "ci_low": 0.391304347826087,
+     "ci_high": 0.8260869565217391,
+     "chance": 0.4602173913043478,
+     "p_value": 0.2885572139303483,
+     "p_corrected": 0.5771144278606966,
+     "n_subjects": 23,
+     "n_probes": 929
+    }
+   ],
+   "subject_scores": {
+    "baseline_age": [
+     {
+      "subject": "sub-001",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-002",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-003",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-004",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-005",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-006",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-007",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-008",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-013",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-014",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-015",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-016",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-019",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-023",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.0
+     }
+    ],
+    "baseline_sex": [
+     {
+      "subject": "sub-001",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-002",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-004",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-006",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-007",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-008",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-009",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-011",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-012",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-013",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-014",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-015",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-017",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-018",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-019",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-020",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-021",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-022",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-024",
+      "score": 1.0
+     }
+    ],
+    "boosting_spectral": [
+     {
+      "subject": "sub-001",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-002",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-004",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-005",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-006",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-007",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-009",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-011",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-012",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-013",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-014",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-017",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-019",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-021",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-023",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-024",
+      "score": 1.0
+     }
+    ],
+    "interpretable_ratio_pac": [
+     {
+      "subject": "sub-001",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-002",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-003",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-004",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-008",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-009",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-011",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-012",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-013",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-018",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-020",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-021",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-023",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.0
+     }
+    ],
+    "linear_spectral": [
+     {
+      "subject": "sub-001",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-004",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-005",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-006",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-007",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-008",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-009",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-011",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-012",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-013",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-014",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-015",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-017",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-019",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.0
+     },
+     {
+      "subject": "sub-021",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-022",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-023",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-024",
+      "score": 1.0
+     }
+    ]
+   },
+   "baseline_comparisons": [
+    {
+     "model": "interpretable_ratio_pac",
+     "baseline": "baseline_sex",
+     "mean_difference": -0.2608695652173913,
+     "ci_low": -0.5217391304347826,
+     "ci_high": 0.0,
+     "n_subjects": 23
+    },
+    {
+     "model": "interpretable_ratio_pac",
+     "baseline": "baseline_age",
+     "mean_difference": -0.0434782608695652,
+     "ci_low": -0.3489130434782608,
+     "ci_high": 0.2608695652173913,
+     "n_subjects": 23
+    },
+    {
+     "model": "linear_spectral",
+     "baseline": "baseline_sex",
+     "mean_difference": -0.0434782608695652,
+     "ci_low": -0.2608695652173913,
+     "ci_high": 0.1304347826086956,
+     "n_subjects": 23
+    },
+    {
+     "model": "linear_spectral",
+     "baseline": "baseline_age",
+     "mean_difference": 0.1739130434782608,
+     "ci_low": -0.0869565217391304,
+     "ci_high": 0.391304347826087,
+     "n_subjects": 23
+    },
+    {
+     "model": "boosting_spectral",
+     "baseline": "baseline_sex",
+     "mean_difference": -0.1304347826086956,
+     "ci_low": -0.3478260869565217,
+     "ci_high": 0.0869565217391304,
+     "n_subjects": 23
+    },
+    {
+     "model": "boosting_spectral",
+     "baseline": "baseline_age",
+     "mean_difference": 0.0869565217391304,
+     "ci_low": -0.1739130434782608,
+     "ci_high": 0.3478260869565217,
+     "n_subjects": 23
+    }
+   ],
+   "headline": {
+    "best_model": "linear_spectral",
+    "best_score": 0.782608695652174,
+    "best_baseline": "baseline_sex",
+    "best_baseline_score": 0.8260869565217391,
+    "beats_chance": false,
+    "beats_best_baseline": false
+   },
+   "source": {
+    "stage": "model_comparison_expertise",
+    "created_at": "20261013T163759605888Z",
+    "code_revision": "dc2f4a967b361fb68c0e1342a556ca2ba44efcd2",
+    "dirty_checkout": false,
+    "n_permutations": 200,
+    "packages": {
+     "mne": "1.13.2",
+     "numpy": "2.5.3",
+     "pandas": "3.0.6",
+     "scipy": "1.18.1",
+     "scikit-learn": "1.9.1",
+     "statsmodels": "0.15.0"
+    }
+   }
+  },
+  "concentration": {
+   "task": "concentration",
+   "kind": "state",
+   "metric": "within_subject_auc",
+   "chance_reference": 0.5,
+   "p_column": "p_holm_task",
+   "multiplicity": "all models including baselines for concentration",
+   "scope": "retrospective LOSO; full-recording EEG normalization and preprocessing",
+   "models": [
+    {
+     "model": "interpretable_ratio_pac",
+     "label": "Interpretable (\u03b3/\u03b8 ratio + PAC)",
+     "kind": "eeg",
+     "score": 0.5180095631608906,
+     "ci_low": 0.4564993591363726,
+     "ci_high": 0.5803518746235921,
+     "chance": 0.5020546471947592,
+     "p_value": 0.3134328358208955,
+     "p_corrected": 0.6417910447761194,
+     "n_subjects": 23,
+     "n_probes": 923
+    },
+    {
+     "model": "linear_spectral",
+     "label": "Linear, 67 spectral features",
+     "kind": "eeg",
+     "score": 0.5289240377421887,
+     "ci_low": 0.4803796253348129,
+     "ci_high": 0.58038010808724,
+     "chance": 0.5029575650301836,
+     "p_value": 0.2139303482587064,
+     "p_corrected": 0.6417910447761194,
+     "n_subjects": 23,
+     "n_probes": 923
+    },
+    {
+     "model": "boosting_spectral",
+     "label": "Gradient boosting, 67 spectral features",
+     "kind": "eeg",
+     "score": 0.4987124768119599,
+     "ci_low": 0.4619649675687495,
+     "ci_high": 0.5376893479217503,
+     "chance": 0.5030806601246265,
+     "p_value": 0.5771144278606966,
+     "p_corrected": 0.6417910447761194,
+     "n_subjects": 23,
+     "n_probes": 923
+    },
+    {
+     "model": "baseline_time",
+     "label": "Time into session (no EEG)",
+     "kind": "baseline",
+     "score": 0.5613044903494336,
+     "ci_low": 0.5048352516562578,
+     "ci_high": 0.613265792986982,
+     "chance": 0.5073978106288282,
+     "p_value": 0.0248756218905472,
+     "p_corrected": 0.099502487562189,
+     "n_subjects": 23,
+     "n_probes": 923
+    }
+   ],
+   "subject_scores": {
+    "baseline_time": [
+     {
+      "subject": "sub-001",
+      "score": 0.4205882352941176
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.6168521462639109
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.6545454545454545
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.7851851851851852
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.4666666666666666
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.5972222222222223
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.7008928571428572
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.7430555555555555
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.5405128205128205
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.6712121212121211
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.6394557823129252
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.7179487179487178
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.4214285714285714
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.3733333333333333
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.5666666666666667
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.5473484848484849
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.2690058479532163
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.4520123839009288
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.6990595611285266
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.4415204678362573
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.5294117647058824
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.6466666666666667
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4094117647058823
+     }
+    ],
+    "boosting_spectral": [
+     {
+      "subject": "sub-001",
+      "score": 0.536764705882353
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.4737678855325914
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.5681818181818181
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.5259259259259259
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.62
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.5059523809523809
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.4404761904761904
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.7430555555555556
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.6235897435897435
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.6075757575757575
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.5170068027210883
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.3076923076923077
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.5214285714285714
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.4
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.5333333333333333
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.4071969696969696
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.3859649122807017
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.4272445820433437
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.4420062695924765
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.4853801169590643
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.5
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.4766666666666667
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4211764705882353
+     }
+    ],
+    "interpretable_ratio_pac": [
+     {
+      "subject": "sub-001",
+      "score": 0.6235294117647059
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.656597774244833
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.6954545454545454
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.5777777777777778
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.7333333333333334
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.5238095238095238
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.6041666666666667
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.6944444444444444
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.6194871794871795
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.7969696969696969
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.3605442176870748
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.2435897435897435
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.4071428571428571
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.32
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.5166666666666667
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.4034090909090909
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.4839181286549707
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.6037151702786377
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.2884012539184952
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.4853801169590643
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.3235294117647058
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.55
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4023529411764706
+     }
+    ],
+    "linear_spectral": [
+     {
+      "subject": "sub-001",
+      "score": 0.6147058823529412
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.6486486486486486
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.4772727272727273
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.4814814814814815
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.6883333333333332
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.4880952380952381
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.4717261904761905
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.611111111111111
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.8287179487179488
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.6803030303030303
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.5238095238095238
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.3782051282051281
+     },
+     {
+      "subject": "sub-014",
+      "score": 0.5642857142857143
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.5800000000000001
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.5083333333333333
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.3939393939393939
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.4473684210526316
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.4736842105263158
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.3166144200626959
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.368421052631579
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.5617647058823529
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.4066666666666666
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.651764705882353
+     }
+    ]
+   },
+   "baseline_comparisons": [
+    {
+     "model": "interpretable_ratio_pac",
+     "baseline": "baseline_time",
+     "mean_difference": -0.0432949271885429,
+     "ci_low": -0.1179369075620293,
+     "ci_high": 0.027227566426898,
+     "n_subjects": 23
+    },
+    {
+     "model": "linear_spectral",
+     "baseline": "baseline_time",
+     "mean_difference": -0.0323804526072448,
+     "ci_low": -0.1128894768263658,
+     "ci_high": 0.0493083004113254,
+     "n_subjects": 23
+    },
+    {
+     "model": "boosting_spectral",
+     "baseline": "baseline_time",
+     "mean_difference": -0.0625920135374737,
+     "ci_low": -0.1216897580282955,
+     "ci_high": -0.0078476365111174,
+     "n_subjects": 23
+    }
+   ],
+   "headline": {
+    "best_model": "linear_spectral",
+    "best_score": 0.5289240377421887,
+    "best_baseline": "baseline_time",
+    "best_baseline_score": 0.5613044903494336,
+    "beats_chance": false,
+    "beats_best_baseline": false
+   },
+   "source": {
+    "stage": "model_comparison_concentration",
+    "created_at": "20261013T172952932623Z",
+    "code_revision": "032d305831a980d47d8ba3d11e94ade206a60346",
+    "dirty_checkout": false,
+    "n_permutations": 200,
+    "packages": {
+     "mne": "1.13.2",
+     "numpy": "2.5.3",
+     "pandas": "3.0.6",
+     "scipy": "1.18.1",
+     "scikit-learn": "1.9.1",
+     "statsmodels": "0.15.0"
+    }
+   }
+  },
+  "mind_wandering": {
+   "task": "mind_wandering",
+   "kind": "state",
+   "metric": "within_subject_auc",
+   "chance_reference": 0.5,
+   "p_column": "p_holm_task",
+   "multiplicity": "all models including baselines for mind_wandering",
+   "scope": "retrospective LOSO; full-recording EEG normalization and preprocessing",
+   "models": [
+    {
+     "model": "interpretable_ratio_pac",
+     "label": "Interpretable (\u03b3/\u03b8 ratio + PAC)",
+     "kind": "eeg",
+     "score": 0.5872607628039052,
+     "ci_low": 0.5158587560496415,
+     "ci_high": 0.6584081589683497,
+     "chance": 0.5015500706264404,
+     "p_value": 0.0149253731343283,
+     "p_corrected": 0.0597014925373134,
+     "n_subjects": 23,
+     "n_probes": 753
+    },
+    {
+     "model": "linear_spectral",
+     "label": "Linear, 67 spectral features",
+     "kind": "eeg",
+     "score": 0.5448191283901404,
+     "ci_low": 0.4793821669654878,
+     "ci_high": 0.6083220224935285,
+     "chance": 0.4961652261640265,
+     "p_value": 0.1144278606965174,
+     "p_corrected": 0.3432835820895522,
+     "n_subjects": 23,
+     "n_probes": 753
+    },
+    {
+     "model": "boosting_spectral",
+     "label": "Gradient boosting, 67 spectral features",
+     "kind": "eeg",
+     "score": 0.525556459273351,
+     "ci_low": 0.4632719536757612,
+     "ci_high": 0.5861939125984486,
+     "chance": 0.5027609190810997,
+     "p_value": 0.2885572139303483,
+     "p_corrected": 0.3980099502487562,
+     "n_subjects": 23,
+     "n_probes": 753
+    },
+    {
+     "model": "baseline_time",
+     "label": "Time into session (no EEG)",
+     "kind": "baseline",
+     "score": 0.5328470310458644,
+     "ci_low": 0.4391248156701606,
+     "ci_high": 0.6187998910922815,
+     "chance": 0.4992573163091415,
+     "p_value": 0.1990049751243781,
+     "p_corrected": 0.3980099502487562,
+     "n_subjects": 23,
+     "n_probes": 753
+    }
+   ],
+   "subject_scores": {
+    "baseline_time": [
+     {
+      "subject": "sub-001",
+      "score": 0.5278637770897833
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.452887537993921
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.2380952380952381
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.5666666666666667
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.6041666666666667
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.5555555555555555
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.3480392156862745
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.0234375
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.967741935483871
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.3595238095238095
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.4557823129251701
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.2291666666666666
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.6948051948051948
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.7745098039215687
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.4827586206896551
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.4462809917355372
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.702020202020202
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.8402777777777778
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.7615384615384615
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.611111111111111
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.4013605442176871
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.6790450928381963
+     }
+    ],
+    "boosting_spectral": [
+     {
+      "subject": "sub-001",
+      "score": 0.4659442724458204
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.4832826747720364
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.5306122448979591
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.5666666666666667
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.5277777777777778
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.346031746031746
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.6421568627450981
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.546875
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.8709677419354839
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.369047619047619
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.5238095238095238
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.625
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.577922077922078
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.7450980392156863
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.1379310344827586
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.5647382920110193
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.6717171717171717
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.5138888888888888
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.4153846153846153
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.3472222222222222
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.5782312925170068
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.5119363395225465
+     }
+    ],
+    "interpretable_ratio_pac": [
+     {
+      "subject": "sub-001",
+      "score": 0.5727554179566563
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.5075987841945289
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.8231292517006803
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.6666666666666666
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.5694444444444444
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.419047619047619
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.6372549019607844
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.609375
+     },
+     {
+      "subject": "sub-009",
+      "score": 1.0
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.6452380952380953
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.5034013605442177
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.6666666666666666
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.4675324675324675
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.7647058823529411
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.4482758620689655
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.5495867768595042
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.6161616161616161
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.2083333333333333
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.3653846153846153
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.7777777777777778
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.629251700680272
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.4721485411140583
+     }
+    ],
+    "linear_spectral": [
+     {
+      "subject": "sub-001",
+      "score": 0.5634674922600619
+     },
+     {
+      "subject": "sub-002",
+      "score": 0.4741641337386018
+     },
+     {
+      "subject": "sub-003",
+      "score": 0.4217687074829932
+     },
+     {
+      "subject": "sub-004",
+      "score": 0.3666666666666667
+     },
+     {
+      "subject": "sub-005",
+      "score": 0.4756944444444445
+     },
+     {
+      "subject": "sub-006",
+      "score": 0.4698412698412698
+     },
+     {
+      "subject": "sub-007",
+      "score": 0.6029411764705882
+     },
+     {
+      "subject": "sub-008",
+      "score": 0.7109375
+     },
+     {
+      "subject": "sub-009",
+      "score": 0.935483870967742
+     },
+     {
+      "subject": "sub-011",
+      "score": 0.4785714285714286
+     },
+     {
+      "subject": "sub-012",
+      "score": 0.5510204081632653
+     },
+     {
+      "subject": "sub-013",
+      "score": 0.2291666666666666
+     },
+     {
+      "subject": "sub-015",
+      "score": 0.5584415584415584
+     },
+     {
+      "subject": "sub-016",
+      "score": 0.7745098039215687
+     },
+     {
+      "subject": "sub-017",
+      "score": 0.3793103448275862
+     },
+     {
+      "subject": "sub-018",
+      "score": 0.5027548209366391
+     },
+     {
+      "subject": "sub-019",
+      "score": 0.6868686868686869
+     },
+     {
+      "subject": "sub-020",
+      "score": 0.638888888888889
+     },
+     {
+      "subject": "sub-021",
+      "score": 0.3961538461538462
+     },
+     {
+      "subject": "sub-022",
+      "score": 0.7777777777777779
+     },
+     {
+      "subject": "sub-023",
+      "score": 0.4557823129251701
+     },
+     {
+      "subject": "sub-024",
+      "score": 0.5358090185676393
+     }
+    ]
+   },
+   "baseline_comparisons": [
+    {
+     "model": "interpretable_ratio_pac",
+     "baseline": "baseline_time",
+     "mean_difference": 0.0544137317580407,
+     "ci_low": -0.0610369633867834,
+     "ci_high": 0.1786000731869421,
+     "n_subjects": 22
+    },
+    {
+     "model": "linear_spectral",
+     "baseline": "baseline_time",
+     "mean_difference": 0.0119720973442761,
+     "ci_low": -0.0683511961779642,
+     "ci_high": 0.1056117467823921,
+     "n_subjects": 22
+    },
+    {
+     "model": "boosting_spectral",
+     "baseline": "baseline_time",
+     "mean_difference": -0.0072905717725131,
+     "ci_low": -0.1004367727476675,
+     "ci_high": 0.0912474920605277,
+     "n_subjects": 22
+    }
+   ],
+   "headline": {
+    "best_model": "interpretable_ratio_pac",
+    "best_score": 0.5872607628039052,
+    "best_baseline": "baseline_time",
+    "best_baseline_score": 0.5328470310458644,
+    "beats_chance": false,
+    "beats_best_baseline": false
+   },
+   "source": {
+    "stage": "model_comparison_mind_wandering",
+    "created_at": "20261013T173550841227Z",
+    "code_revision": "032d305831a980d47d8ba3d11e94ade206a60346",
+    "dirty_checkout": false,
+    "n_permutations": 200,
+    "packages": {
+     "mne": "1.13.2",
+     "numpy": "2.5.3",
+     "pandas": "3.0.6",
+     "scipy": "1.18.1",
+     "scikit-learn": "1.9.1",
+     "statsmodels": "0.15.0"
+    }
+   }
+  }
+ },
+ "replication": {
+  "verdict": "NOT REPLICATED (negative slope with one-sided p < 0.05 not met)",
+  "reference_estimate": -0.21,
+  "alpha_one_sided": 0.05,
+  "rows": [
+   {
+    "analysis": "PRIMARY: SILENT blocks",
+    "fit_valid": true,
+    "method": "OLS, participant-clustered SE",
+    "estimate": -0.072265078318226,
+    "ci_low": -0.1663918486062583,
+    "ci_high": 0.0218616919698062,
+    "p_two_sided": 0.1284237815872469,
+    "p_one_sided_negative": 0.0642118907936234,
+    "n_reports": 830.0,
+    "n_participants": 39,
+    "note": null
+   },
+   {
+    "analysis": "CROSS-CHECK: per-participant slopes",
+    "fit_valid": true,
+    "method": "per-participant slopes, one-sample t",
+    "estimate": -0.0742969661954874,
+    "ci_low": -0.1840440007852408,
+    "ci_high": 0.0354500683942659,
+    "p_two_sided": 0.1785784930343619,
+    "p_one_sided_negative": 0.0892892465171809,
+    "n_reports": null,
+    "n_participants": 39,
+    "note": "26 of 39 slopes negative"
+   },
+   {
+    "analysis": "ORIGINAL pre-registered mixed model",
+    "fit_valid": false,
+    "method": "mixed model as pre-registered",
+    "estimate": -0.058751577132026,
+    "ci_low": -0.1575829325717425,
+    "ci_high": 0.0400797783076905,
+    "p_two_sided": null,
+    "p_one_sided_negative": null,
+    "n_reports": 830.0,
+    "n_participants": 39,
+    "note": null
+   },
+   {
+    "analysis": "S1 all blocks (+ block type, variant)",
+    "fit_valid": true,
+    "method": "OLS, participant-clustered SE",
+    "estimate": -0.0861647410994817,
+    "ci_low": -0.1524484068157001,
+    "ci_high": -0.0198810753832632,
+    "p_two_sided": 0.0122125001494658,
+    "p_one_sided_negative": 0.0061062500747329,
+    "n_reports": 1707.0,
+    "n_participants": 39,
+    "note": null
+   },
+   {
+    "analysis": "S2 SILENT, prompted reports only",
+    "fit_valid": true,
+    "method": "OLS, participant-clustered SE",
+    "estimate": -0.0263107261110025,
+    "ci_low": -0.1671702920496089,
+    "ci_high": 0.1145488398276038,
+    "p_two_sided": 0.7072471803875758,
+    "p_one_sided_negative": 0.3536235901937879,
+    "n_reports": 334.0,
+    "n_participants": 38,
+    "note": null
+   },
+   {
+    "analysis": "S3 gamma power alone",
+    "fit_valid": true,
+    "method": "OLS, participant-clustered SE",
+    "estimate": -0.0322124230773255,
+    "ci_low": -0.1381900707865258,
+    "ci_high": 0.0737652246318747,
+    "p_two_sided": 0.5420082971179833,
+    "p_one_sided_negative": 0.2710041485589916,
+    "n_reports": 830.0,
+    "n_participants": 39,
+    "note": null
+   },
+   {
+    "analysis": "S3 theta power alone",
+    "fit_valid": true,
+    "method": "OLS, participant-clustered SE",
+    "estimate": 0.0828868645966127,
+    "ci_low": -0.0063624944528623,
+    "ci_high": 0.1721362236460879,
+    "p_two_sided": 0.0677799404981722,
+    "p_one_sided_negative": 0.966110029750914,
+    "n_reports": 830.0,
+    "n_participants": 39,
+    "note": null
+   },
+   {
+    "analysis": "S4 ratio + temple gamma covariate",
+    "fit_valid": true,
+    "method": "OLS, participant-clustered SE",
+    "estimate": -0.0685105127224877,
+    "ci_low": -0.1623885080013036,
+    "ci_high": 0.0253674825563281,
+    "p_two_sided": 0.1478179063418741,
+    "p_one_sided_negative": 0.073908953170937,
+    "n_reports": 830.0,
+    "n_participants": 39,
+    "note": null
+   },
+   {
+    "analysis": "S5 in_analysis participants only",
+    "fit_valid": true,
+    "method": "OLS, participant-clustered SE",
+    "estimate": -0.0747450089662504,
+    "ci_low": -0.1755301385508808,
+    "ci_high": 0.0260401206183799,
+    "p_two_sided": 0.1412815782339065,
+    "p_one_sided_negative": 0.0706407891169532,
+    "n_reports": 776.0,
+    "n_participants": 37,
+    "note": null
+   },
+   {
+    "analysis": "S6 per-person slopes (median)",
+    "fit_valid": null,
+    "method": null,
+    "estimate": -0.0902279171791872,
+    "ci_low": null,
+    "ci_high": null,
+    "p_two_sided": null,
+    "p_one_sided_negative": null,
+    "n_reports": null,
+    "n_participants": 39,
+    "note": "25 of 39 participants negative"
+   }
+  ],
+  "source": {
+   "stage": "replication_ds008836",
+   "created_at": "20261013T163038393100Z",
+   "code_revision": "5c48b24a9dd95bd408002bd30afa8dcf2d87f665",
+   "dirty_checkout": false,
+   "n_permutations": null,
+   "packages": {
+    "mne": "1.13.2",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "statsmodels": "0.15.0"
+   }
+  }
+ },
+ "qc": {
+  "ds001787": {
+   "recordings": 40,
+   "subjects": 24,
+   "probes_kept": 980,
+   "epochs_kept": 67396,
+   "median_reject_rate": 0.02465803887991195,
+   "median_bad_channels": 2.0,
+   "excluded_recordings": [
+    "sub-010_ses-01_task-meditation",
+    "sub-010_ses-02_task-meditation"
+   ]
+  },
+  "ds008836": {
+   "recordings": 78,
+   "subjects": 39,
+   "probes_kept": 1731,
+   "epochs_kept": 167650,
+   "median_reject_rate": 0.0034234759755321,
+   "median_bad_channels": 7.0,
+   "excluded_recordings": [
+    "sub-029_ses-2_task-meditation"
+   ]
+  }
+ }
+}
