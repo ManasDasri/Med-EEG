@@ -91,6 +91,9 @@ src/
   ds008836.py             adapter for the replication dataset (loader + report windows)
   replication_ds008836.py the pre-registered replication test
   depth_decoding.py       decode depth in ds008836: spectral, Riemannian, segment models
+  band_covariances.py     per-report theta/alpha/beta covariances (phase 8 search)
+  explore_depth.py        phase 8 search: candidates on 26 people, one held-out test on 13
+  calibrate_depth.py      phase 8: does one rated calibration session help?
   publish_results.py      bundle finished runs into results/latest/results.json
   model_comparison.py     LOSO models + permutation tests + non-EEG baselines + SHAP
   export_dashboard.py     bundle results into dashboard_data.json
@@ -104,6 +107,8 @@ tests/
   test_ds008836.py              replication report-window parser
   test_replication.py           pre-registered decision rule
   test_depth_decoding.py        Riemannian re-centring and segment-model checks
+  test_explore_depth.py         search learners + the alpha-selection leak
+  test_calibrate_depth.py       calibration never sees the test session
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          retirement notice for the invalid historical prototype
@@ -224,6 +229,14 @@ deeper-than-usual reports from their shallower ones at within-person AUC
 non-EEG baseline by +0.091 per person (0.046–0.132). Spectrum-based models
 reach 0.55–0.57. Modest, and people vary a lot: 13 randomly chosen people
 average 0.54. Details: [`docs/depth_decoding_results.md`](docs/depth_decoding_results.md).
+
+**Searching for more (phase 8).** Nine variants (frequency bands, filter
+bank, extra spectral features, ensemble, temporal context, target
+treatments) were scored on 26 people and none beat the plain covariance
+model. One rated calibration session helped a little (+0.013 on 12 held-out
+people, interval −0.006 to 0.033), which isn't confirmed. It also fixed a
+RidgeCV alpha-selection leak; the phase 7 model re-run with the fix gives
+0.607. Details: [`docs/depth_search_results.md`](docs/depth_search_results.md).
 
 ## Publishing results
 
