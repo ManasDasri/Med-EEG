@@ -94,6 +94,9 @@ src/
   band_covariances.py     per-report theta/alpha/beta covariances (phase 8 search)
   explore_depth.py        phase 8 search: candidates on 26 people, one held-out test on 13
   calibrate_depth.py      phase 8: does one rated calibration session help?
+  fidelity.py             phase 9: per-person brain-report fidelity, stability, practice
+  horizon.py              phase 9: decoding depth from bins before the report
+  horizon_equal_bins.py   phase 9 exploratory: equal-length bins
   publish_results.py      bundle finished runs into results/latest/results.json
   model_comparison.py     LOSO models + permutation tests + non-EEG baselines + SHAP
   export_dashboard.py     bundle results into dashboard_data.json
@@ -109,6 +112,7 @@ tests/
   test_depth_decoding.py        Riemannian re-centring and segment-model checks
   test_explore_depth.py         search learners + the alpha-selection leak
   test_calibrate_depth.py       calibration never sees the test session
+  test_phase9.py                kernel ridge = sklearn ridge; bins; fidelity helpers
 dashboard.html            NeuroDial results dashboard (open directly in a browser)
 dashboard_data.sample.json  sample data for the dashboard
 knn_prototype.py          retirement notice for the invalid historical prototype
@@ -238,6 +242,22 @@ model. One rated calibration session helped a little (+0.013 on 12 held-out
 people, interval −0.006 to 0.033), which isn't confirmed. It also fixed a
 RidgeCV alpha-selection leak; the phase 7 model re-run with the fix gives
 0.607. Details: [`docs/depth_search_results.md`](docs/depth_search_results.md).
+
+### Introspective fidelity and the lead-up horizon (phase 9)
+
+Pre-registered ([`docs/preregistration_phase9.md`](docs/preregistration_phase9.md)).
+Two new questions on ds008836, beyond decoding:
+- **The lead-up horizon (supported):** the depth a meditator is about to
+  report is already in their EEG **60–120 s before the report** (AUC 0.584,
+  Holm p = 0.020), and it doesn't fade with distance: equal 10-s bins
+  score ~0.54 both 0–10 s and 110–120 s before. Depth behaves like a slow state.
+- **Introspective fidelity (not supported, and why):** how well a person's
+  reports track their own EEG doesn't correlate detectably across their two
+  sessions (ρ = 0.15, p = 0.19), or with practice. About 73% of the
+  per-session variation is sampling noise at ~21 reports per session.
+  Measuring it reliably would need ~130 reports per session.
+
+Details: [`docs/phase9_results.md`](docs/phase9_results.md).
 
 ## Publishing results
 
