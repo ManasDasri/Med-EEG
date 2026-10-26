@@ -106,3 +106,14 @@ permutations.
 Only outcome-independent fixes (a crash, a wrong file, too few reports in a
 bin to fit at all), each listed in the results with its time. No bin,
 window, model, threshold or test changes after results are seen.
+
+## Implementation choices (added with the code, still before any run)
+- A1 noise check: the rating-shift null counts as "not centred on 0" if its
+  mean is beyond ±0.1.
+- B2 uses people with a scorable AUC in all four bins; the count is reported.
+- B3 needs only bins B1 and B4 per report type, so only those are fitted.
+- Part B's ridge is computed in kernel form (exact ridge with intercept, the
+  same as scikit-learn's, checked in `tests/test_phase9.py`), so the real
+  ratings and all 200 permutations share one decomposition per fold. Alpha
+  is still chosen per fold and per permutation by person-grouped CV
+  (mean R²). Standardisation inside inner folds uses the inner training rows.
